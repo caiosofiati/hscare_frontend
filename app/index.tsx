@@ -1,3 +1,4 @@
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
   Image,
@@ -21,7 +22,6 @@ export default function LoginScreen() {
         resizeMode="contain"
       />
 
-      {/* Inputs */}
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -41,8 +41,15 @@ export default function LoginScreen() {
         secureTextEntry
       />
 
-      <TouchableOpacity style={styles.botao}>
-        <Text style={styles.textoBotao}>Entrar</Text>
+      <TouchableOpacity style={{ width: "100%", marginTop: 10, marginBottom: 20 }}>
+        <LinearGradient
+          colors={["#3BB2E4", "#6DD66D"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.botao}
+        >
+          <Text style={styles.textoBotao}>Entrar</Text>
+        </LinearGradient>
       </TouchableOpacity>
 
       <TouchableOpacity>
@@ -80,12 +87,9 @@ const styles = StyleSheet.create({
   },
   botao: {
     width: "100%",
-    backgroundColor: "#4CAF50",
     borderRadius: 25,
     padding: 15,
     alignItems: "center",
-    marginTop: 10,
-    marginBottom: 20,
   },
   textoBotao: {
     color: "#fff",
