@@ -1,27 +1,37 @@
+import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  Image,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity
 } from "react-native";
 
-export default function LoginScreen() {
-  const router = useRouter();
+export default function RegistroScreen() {
+  const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmarPassword, setConfirmarPassword] = useState("");
+  const router = useRouter();
 
   return (
-    <View style={styles.container}>
-      {/* Logo */}
+    <ScrollView contentContainerStyle={styles.container}>
       <Image 
-        source={require("../assets/images/hscare.png")} 
+        source={require("../../assets/images/hscare.png")} 
         style={styles.logo} 
         resizeMode="contain"
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Nome completo"
+        placeholderTextColor="#aaa"
+        value={nome}
+        onChangeText={setNome}
       />
 
       <TextInput
@@ -43,6 +53,15 @@ export default function LoginScreen() {
         secureTextEntry
       />
 
+      <TextInput
+        style={styles.input}
+        placeholder="Confirmar Senha"
+        placeholderTextColor="#aaa"
+        value={confirmarPassword}
+        onChangeText={setConfirmarPassword}
+        secureTextEntry
+      />
+
       <TouchableOpacity style={{ width: "100%", marginTop: 10, marginBottom: 20 }}>
         <LinearGradient
           colors={["#3BB2E4", "#6DD66D"]}
@@ -50,22 +69,36 @@ export default function LoginScreen() {
           end={{ x: 1, y: 1 }}
           style={styles.botao}
         >
-          <Text style={styles.textoBotao}>Entrar</Text>
+          <Text style={styles.textoBotao}>Cadastrar</Text>
         </LinearGradient>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push("/screens/screenRegistro")}>
-        <Text style={styles.botaoDeRegistro}>
-          Cadastre-se
-        </Text>
+      <TouchableOpacity onPress={() => router.push("/")}>
+        <MaskedView
+          maskElement={
+            <Text style={styles.gradientTexto}>
+              Já tem conta? Faça login
+            </Text>
+          }
+        >
+          <LinearGradient
+            colors={["#3BB2E4", "#6DD66D"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Text style={[styles.gradientTexto, { opacity: 0 }]}>
+              Já tem conta? Faça login
+            </Text>
+          </LinearGradient>
+        </MaskedView>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
@@ -98,9 +131,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
   },
-  botaoDeRegistro: {
+  textoRegistro: {
     color: "#4CAF50",
     fontSize: 16,
     fontWeight: "500",
+  },
+  gradientTexto: {
+    fontSize: 16,
+    fontWeight: "500",
+    textAlign: "center",
   },
 });
