@@ -1,3 +1,4 @@
+import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -54,10 +55,24 @@ export default function LoginScreen() {
         </LinearGradient>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push("/screens/screenRegistro")}>
-        <Text style={styles.botaoDeRegistro}>
-          Cadastre-se
-        </Text>
+      <TouchableOpacity onPress={() => router.push("../screens/screenRegistro")}>
+        <MaskedView
+          maskElement={
+            <Text style={styles.gradientTexto}>
+              Não possuí conta? Cadastre-se
+            </Text>
+          }
+        >
+          <LinearGradient
+            colors={["#3BB2E4", "#6DD66D"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Text style={[styles.gradientTexto, { opacity: 0 }]}>
+              Não possuí conta? Cadastre-se
+            </Text>
+          </LinearGradient>
+        </MaskedView>
       </TouchableOpacity>
     </View>
   );
@@ -102,5 +117,10 @@ const styles = StyleSheet.create({
     color: "#4CAF50",
     fontSize: 16,
     fontWeight: "500",
+  },
+    gradientTexto: {
+    fontSize: 16,
+    fontWeight: "500",
+    textAlign: "center",
   },
 });
