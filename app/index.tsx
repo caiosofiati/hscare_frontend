@@ -1,9 +1,9 @@
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  Image,
+  Animated,
   StyleSheet,
   Text,
   TextInput,
@@ -16,12 +16,34 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+    const animacaoFade = useRef(new Animated.Value(0)).current; 
+    const scaleDaAnimacao = useRef(new Animated.Value(0.8)).current; 
+  
+      useEffect(() => {
+      Animated.parallel([
+        Animated.timing(animacaoFade, {
+          toValue: 1,
+          duration: 1200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleDaAnimacao, {
+          toValue: 1,
+          friction: 4,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, []);
+  
+
   return (
     <View style={styles.container}>
-      {/* Logo */}
-      <Image 
+
+      <Animated.Image 
         source={require("../assets/images/hscare-bkg.png")} 
-        style={styles.logo} 
+        style={[
+          styles.logo, 
+          { opacity: animacaoFade, transform: [{ scale: scaleDaAnimacao }] }
+        ]} 
         resizeMode="contain"
       />
 
