@@ -20,7 +20,7 @@ export default function LoginScreen() {
     <View style={styles.container}>
       {/* Logo */}
       <Image 
-        source={require("../assets/images/hscare.png")} 
+        source={require("../assets/images/hscare-bkg.png")} 
         style={styles.logo} 
         resizeMode="contain"
       />

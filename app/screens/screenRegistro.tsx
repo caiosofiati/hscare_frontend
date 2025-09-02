@@ -3,12 +3,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity
 } from "react-native";
 
 export default function RegistroScreen() {
@@ -21,7 +21,7 @@ export default function RegistroScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Image 
-        source={require("../../assets/images/hscare.png")} 
+        source={require("../../assets/images/hscare-bkg.png")} 
         style={styles.logo} 
         resizeMode="contain"
       />
