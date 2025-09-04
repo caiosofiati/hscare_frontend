@@ -66,7 +66,7 @@ export default function LoginScreen() {
         secureTextEntry
       />
 
-      <TouchableOpacity style={{ width: "100%", marginTop: 10, marginBottom: 20 }}>
+      <TouchableOpacity style={{ width: "100%", marginTop: 10, marginBottom: 20 }} onPress={() => router.push("../screens/screenHome")}>
         <LinearGradient
           colors={["#3BB2E4", "#6DD66D"]}
           start={{ x: 0, y: 0 }}
