@@ -20,9 +20,8 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
     <DrawerContentScrollView
       {...props}
       contentContainerStyle={{ paddingTop: 0 }}
-      style={{ flex: 1}} // remove padding lateral
+      style={{ flex: 1}}
     >
-      {/* Header com gradiente ocupando toda a largura */}
       <LinearGradient
         colors={["#3BB2E4", "#6DD66D"]}
         start={{ x: 0, y: 0 }}
@@ -96,17 +95,14 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   drawerItemsContainer: {
-    flex: 1,
-    width: "100%",
-    paddingHorizontal: 0, // remove padding lateral
+    marginLeft: -12,
+    marginRight: -12,
   },
   drawerItem: {
     borderRadius: 0,
-    marginLeft: -15,
-    marginRight: -15,
   },
   drawerLabel: {
     fontSize: 16,
-    marginLeft: -4, // ajusta alinhamento do texto com ícone
+    marginLeft: -4,
   },
 });
