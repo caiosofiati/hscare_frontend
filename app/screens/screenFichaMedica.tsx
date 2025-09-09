@@ -1,6 +1,13 @@
-import { Picker } from "@react-native-picker/picker";
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { Picker } from '@react-native-picker/picker';
+import * as FileSystem from 'expo-file-system';
+import { LinearGradient } from "expo-linear-gradient";
+import * as Print from 'expo-print';
+import { useRouter } from "expo-router";
+import * as Sharing from 'expo-sharing';
 import React, { useState } from "react";
 import {
+  Image,
   ScrollView,
   StyleSheet,
   Switch,
@@ -25,10 +32,11 @@ export default function Ficha_MedicaScreen() {
 
   const [isDonor, setIsDonor] = useState(false);
 
-  const [contacts, setContacts] = useState<
-    { name: string; relationship: string; phone: string }[]
-  >([]);
-  const [newContact, setNewContact] = useState({ name: "", relationship: "", phone: "" });
+  // const [contacts, setContacts] = useState<
+  //   { name: string; relationship: string; phone: string }[]
+  // >([]);
+  // const [newContact, setNewContact] = useState({ name: "", relationship: "", phone: "" });
+  const router = useRouter();
 
   const addToList = (item: string, list: string[], setter: React.Dispatch<React.SetStateAction<string[]>>) => {
     if (item.trim() !== "") {
@@ -36,139 +44,339 @@ export default function Ficha_MedicaScreen() {
     }
   };
 
-  const addContact = () => {
-    if (newContact.name && newContact.relationship && newContact.phone) {
-      setContacts([...contacts, newContact]);
-      setNewContact({ name: "", relationship: "", phone: "" });
-    }
-  };
+const [fullName, setFullName] = useState("Bagriel TchupaPika");
+const [birthDate, setBirthDate] = useState(new Date("1997-04-18"));
+const [showDatePicker, setShowDatePicker] = useState(false);
+const [age, setAge] = useState("23");
+const [gender, setGender] = useState("Masculino");
+const [bloodType, setBloodType] = useState("O+");
+const [height, setHeight] = useState("185"); 
+const [weight, setWeight] = useState("70");  
 
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
-      <Text style={styles.sectionTitle}>Informações pessoais</Text>
 
-      <Text style={styles.label}>Nome completo</Text>
-      <TextInput value="João da Silva" editable={false} style={styles.readOnlyInput} />
+  // const addContact = () => {
+  //   if (newContact.name && newContact.relationship && newContact.phone) {
+  //     setContacts([...contacts, newContact]);
+  //     setNewContact({ name: "", relationship: "", phone: "" });
+  //   }
+  // };
 
-      <Text style={styles.label}>Foto</Text>
-      <TextInput value="[Foto do usuário]" editable={false} style={styles.readOnlyInput} />
+  const generatePDF = async () => {
+  const htmlContent = `
+    <html>
+      <head>
+        <style>
+          body { font-family: Arial; padding: 24px; }
+          h1 { color: #3BB2E4; }
+          h2 { margin-top: 24px; }
+          ul { padding-left: 20px; }
+        </style>
+      </head>
+      <body>
+        <h1>Ficha Médica</h1>
+        
+        <h2>Informações Pessoais</h2>
+        <p><strong>Nome:</strong> ${fullName}</p>
+        <p><strong>Data de nascimento:</strong> ${birthDate.toLocaleDateString("pt-BR")}</p>
+        <p><strong>Idade:</strong> ${age}</p>
+        <p><strong>Gênero:</strong> ${gender}</p>
+        <p><strong>Tipo sanguíneo:</strong> ${bloodType}</p>
+        <p><strong>Altura:</strong> ${height}</p>
+        <p><strong>Peso:</strong> ${weight}</p>
+        <p><strong>Doador de órgãos:</strong> ${isDonor ? "Sim" : "Não"}</p>
 
-      <Text style={styles.label}>Data de nascimento</Text>
-      <TextInput value="01/01/1990" editable={false} style={styles.readOnlyInput} />
+        <h2>Condições Médicas</h2>
+        <ul>
+          ${medicalConditions.map(cond => `<li>${cond}</li>`).join("")}
+        </ul>
 
-      <Text style={styles.label}>Idade</Text>
-      <TextInput value="35" editable={false} style={styles.readOnlyInput} />
+        <h2>Alergias</h2>
+        <ul>
+          ${allergies.map(all => `<li>${all}</li>`).join("")}
+        </ul>
 
-      <Text style={styles.label}>Gênero</Text>
-      <TextInput value="Masculino" editable={false} style={styles.readOnlyInput} />
+        <h2>Medicamentos</h2>
+        <ul>
+          ${medications.map(med => `<li>${med}</li>`).join("")}
+        </ul>
 
-      <Text style={styles.label}>Tipo sanguíneo</Text>
-      <TextInput value="O+" editable={false} style={styles.readOnlyInput} />
+      </body>
+    </html>
+  `;
 
-      <Text style={styles.label}>Altura</Text>
-      <TextInput value="1.75m" editable={false} style={styles.readOnlyInput} />
+  const { uri } = await Print.printToFileAsync({ html: htmlContent });
+  const newFileName = 'Ficha Médica Gabriel Tchupapika.pdf';
+  const newPath = `${FileSystem.documentDirectory}${newFileName}`;
 
-      <Text style={styles.label}>Peso</Text>
-      <TextInput value="70kg" editable={false} style={styles.readOnlyInput} />
+  // Move (renomeia) o arquivo
+  await FileSystem.moveAsync({
+    from: uri,
+    to: newPath
+  });
 
-      <Text style={styles.label}>Língua preferida</Text>
-      <View style={styles.pickerWrapper}>
-        <Picker selectedValue={language} onValueChange={setLanguage}>
-          <Picker.Item label="Português (Brasil)" value="pt-BR" />
-          <Picker.Item label="Inglês (EUA)" value="en-US" />
-          <Picker.Item label="Espanhol" value="es-ES" />
-        </Picker>
-      </View>
+  // Compartilha o novo arquivo
+  await Sharing.shareAsync(newPath);
+};
 
-      {/* Condições médicas */}
-      <Text style={styles.sectionTitle}>Condições médicas</Text>
-      <TextInput
-        placeholder="Ex: Diabetes"
-        style={styles.input}
-        value={medicalCondition}
-        onChangeText={setMedicalCondition}
-        onSubmitEditing={() => {
-          addToList(medicalCondition, medicalConditions, setMedicalConditions);
-          setMedicalCondition("");
-        }}
-      />
-      {medicalConditions.map((cond, idx) => (
-        <Text key={idx} style={styles.listItem}>• {cond}</Text>
-      ))}
 
-      {/* Alergias */}
-      <Text style={styles.sectionTitle}>Alergias e reações adversas</Text>
-      <TextInput
-        placeholder="Ex: Alergia a penicilina"
-        style={styles.input}
-        value={allergy}
-        onChangeText={setAllergy}
-        onSubmitEditing={() => {
-          addToList(allergy, allergies, setAllergies);
-          setAllergy("");
-        }}
-      />
-      {allergies.map((a, idx) => (
-        <Text key={idx} style={styles.listItem}>• {a}</Text>
-      ))}
+return (
+  <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
 
-      {/* Medicamentos */}
-      <Text style={styles.sectionTitle}>Medicamentos em uso</Text>
-      <TextInput
-        placeholder="Ex: Metformina"
-        style={styles.input}
-        value={medication}
-        onChangeText={setMedication}
-        onSubmitEditing={() => {
-          addToList(medication, medications, setMedications);
-          setMedication("");
-        }}
-      />
-      {medications.map((m, idx) => (
-        <Text key={idx} style={styles.listItem}>• {m}</Text>
-      ))}
+      <View style={styles.container}>
+        <LinearGradient
+                colors={["#3BB2E4", "#6DD66D"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.header}
+              >
+        
+              <Image
+                source={require("../../assets/images/hscare-bkg.png")}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+          </LinearGradient>
 
-      {/* Doador de órgãos */}
-      <Text style={styles.sectionTitle}>Status de doador de órgãos</Text>
-      <View style={styles.switchRow}>
-        <Text style={styles.label}>É doador?</Text>
-        <Switch value={isDonor} onValueChange={setIsDonor} />
-      </View>
 
-      {/* Contatos de emergência */}
-      <Text style={styles.sectionTitle}>Contatos de emergência</Text>
+        <View style={styles.conteudo}>
+          <Text style={styles.sectionTitle}>Informações pessoais</Text>
 
-      {contacts.map((contact, idx) => (
-        <View key={idx} style={styles.contactCard}>
-          <Text style={styles.listItem}>👤 {contact.name}</Text>
-          <Text style={styles.listItem}>🤝 {contact.relationship}</Text>
-          <Text style={styles.listItem}>📞 {contact.phone}</Text>
+          <Text style={styles.label}>Nome completo</Text>
+          <TextInput value={fullName} onChangeText={setFullName} style={styles.input}/>
+
+          <Text style={styles.label}>Data de nascimento</Text>
+          <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+            <TextInput
+              style={styles.input}
+              editable={false}
+              value={birthDate.toLocaleDateString("pt-BR")}
+            />
+          </TouchableOpacity>
+          {showDatePicker && (
+            <DateTimePicker
+              value={birthDate}
+              mode="date"
+              display="default"
+              onChange={(event: any, selectedDate?: Date) => {
+              setShowDatePicker(false);
+              if (selectedDate) {
+                setBirthDate(selectedDate);
+              }
+            }}
+            />
+          )}
+
+
+          <Text style={styles.label}>Idade</Text>
+          <TextInput value={age} onChangeText={setAge} style={styles.input}  keyboardType="numeric"/>
+
+          <Text style={styles.label}>Gênero</Text>
+          <View style={styles.botao}>
+          <Picker
+            selectedValue={gender}
+            onValueChange={(itemValue) => setGender(itemValue)}
+            style={styles.picker}
+          >
+            <Picker.Item label="Masculino" value="Masculino" />
+            <Picker.Item label="Feminino" value="Feminino" />
+            <Picker.Item label="Geladeira Eletrolux" value="Geladeira Eletrolux" />
+          </Picker>
         </View>
-      ))}
 
-      <TextInput
-        placeholder="Nome do contato"
-        style={styles.input}
-        value={newContact.name}
-        onChangeText={(text) => setNewContact({ ...newContact, name: text })}
-      />
-      <TextInput
-        placeholder="Grau de parentesco"
-        style={styles.input}
-        value={newContact.relationship}
-        onChangeText={(text) => setNewContact({ ...newContact, relationship: text })}
-      />
-      <TextInput
-        placeholder="Telefone"
-        style={styles.input}
-        value={newContact.phone}
-        keyboardType="phone-pad"
-        onChangeText={(text) => setNewContact({ ...newContact, phone: text })}
-      />
 
-      <TouchableOpacity style={styles.addButton} onPress={addContact}>
-        <Text style={styles.addButtonText}>Adicionar contato</Text>
-      </TouchableOpacity>
+          <Text style={styles.label}>Tipo sanguíneo</Text>
+          <View style={styles.botao}>
+          <Picker
+            selectedValue={bloodType}
+            onValueChange={(itemValue) => setBloodType(itemValue)}
+            style={styles.picker}
+          >
+            <Picker.Item label="A+" value="A+" />
+            <Picker.Item label="A-" value="A-" />
+            <Picker.Item label="B+" value="B+" />
+            <Picker.Item label="B-" value="B-" />
+            <Picker.Item label="AB+" value="AB+" />
+            <Picker.Item label="AB-" value="AB-" />
+            <Picker.Item label="O+" value="O+" />
+            <Picker.Item label="O-" value="O-" />
+          </Picker>
+        </View>
+
+          <Text style={styles.label}>Altura</Text>
+          <TextInput value={height} onChangeText={setHeight} style={styles.input} keyboardType="numeric"/>
+
+          <Text style={styles.label}>Peso</Text>
+          <TextInput value={weight} onChangeText={setWeight} style={styles.input} keyboardType="numeric"/>
+
+          {/* Condições médicas */}
+          <Text style={styles.sectionTitle}>Condições médicas</Text>
+
+          {medicalConditions.map((cond, idx) => (
+            <View key={idx} style={styles.itemCard}>
+              <Text style={styles.listItem}>🩺 {cond}</Text>
+            </View>
+          ))}
+
+
+          <TextInput
+            placeholder="Ex: Diabetes"
+            style={styles.input}
+            value={medicalCondition}
+            onChangeText={setMedicalCondition}
+          />
+
+          <TouchableOpacity style={styles.botao} onPress={() => {
+              addToList(medicalCondition, medicalConditions, setMedicalConditions);
+              setMedicalCondition("");
+            }} >
+            <LinearGradient
+              colors={["#3BB2E4", "#6DD66D"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.botao}
+            >
+              <Text style={styles.addButtonText}>Adicionar condição</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          {/* Alergias */}
+          <Text style={styles.sectionTitle}>Alergias e reações adversas</Text>
+          {allergies.map((a, idx) => (
+            <View key={idx} style={styles.itemCard}>
+              <Text style={styles.listItem}>⚠️ {a}</Text>
+            </View>
+          ))}
+          <TextInput
+            placeholder="Ex: Alergia a penicilina"
+            style={styles.input}
+            value={allergy}
+            onChangeText={setAllergy}
+          />
+          <TouchableOpacity
+            style={styles.botao}
+            onPress={() => {
+              addToList(allergy, allergies, setAllergies);
+              setAllergy("");
+            }}
+          >
+
+            <LinearGradient
+              colors={["#3BB2E4", "#6DD66D"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.botao}
+            >
+              <Text style={styles.addButtonText}>Adicionar alergia</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+
+
+          {/* Medicamentos */}
+          <Text style={styles.sectionTitle}>Medicamentos em uso</Text>
+
+          {medications.map((m, idx) => (
+            <View key={idx} style={styles.itemCard}>
+              <Text style={styles.listItem}>💊 {m}</Text>
+            </View>
+          ))}
+
+
+          <TextInput 
+          placeholder="Ex: Metformina" 
+          style={styles.input} 
+          value={medication}
+          onChangeText={setMedication}/>
+
+          <TouchableOpacity
+            style={styles.botao}
+            onPress={() => {
+              addToList(medication, medications, setMedications);
+              setMedication("");
+            }}
+          >
+            <LinearGradient
+              colors={["#3BB2E4", "#6DD66D"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.botao}
+            >
+              <Text style={styles.addButtonText}>Adicionar medicamento</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          {/* Doador de órgãos */}
+          <Text style={styles.sectionTitle}>Status de doador de órgãos</Text>
+          <View style={styles.donorCard}>
+            <Text style={styles.donorLabel}>Você é doador de órgãos?</Text>
+            <Switch
+              value={isDonor}
+              onValueChange={setIsDonor}
+              trackColor={{ false: "#ccc", true: "#6DD66D" }}
+              thumbColor={isDonor ? "#3BB2E4" : "#f4f3f4"}
+            />
+          </View>
+          <Text style={styles.donorStatus}>
+            {isDonor ? "✅ Doador registrado" : "❌ Não é doador"}
+          </Text>
+
+
+          Contatos de emergência
+          {/* <Text style={styles.sectionTitle}>Contatos de emergência</Text>
+
+          {contacts.map((contact, idx) => (
+            <View key={idx} style={styles.contactCard}>
+              <Text style={styles.listItem}>👤 {contact.name}</Text>
+              <Text style={styles.listItem}>🤝 {contact.relationship}</Text>
+              <Text style={styles.listItem}>📞 {contact.phone}</Text>
+            </View>
+          ))}
+
+          <TextInput
+            placeholder="Nome do contato"
+            style={styles.input}
+            value={newContact.name}
+            onChangeText={(text) => setNewContact({ ...newContact, name: text })}
+          />
+          <TextInput
+            placeholder="Grau de parentesco"
+            style={styles.input}
+            value={newContact.relationship}
+            onChangeText={(text) => setNewContact({ ...newContact, relationship: text })}
+          />
+          <TextInputMask
+          type={'cel-phone'}
+          options={{
+            maskType: 'BRL',
+            withDDD: true,
+            dddMask: '(99) '
+          }}
+          placeholder="Telefone"
+          style={styles.input}
+          value={newContact.phone}
+          keyboardType="phone-pad"
+          onChangeText={(text) => setNewContact({ ...newContact, phone: text })}
+          /> */}
+
+          {/* <TouchableOpacity style={styles.addButton} onPress={addContact}>
+            <Text style={styles.addButtonText}>Adicionar contato</Text>
+          </TouchableOpacity> */}
+
+          <TouchableOpacity
+            style={styles.botao}
+            onPress={generatePDF}
+          >
+
+            <LinearGradient
+              colors={["#3BB2E4", "#6DD66D"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.botao}
+            >
+              <Text style={styles.addButtonText}>Exportar para PDF</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      </View>
     </ScrollView>
   );
 }
@@ -176,8 +384,20 @@ export default function Ficha_MedicaScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: "#fff"
+    backgroundColor: "#fff",
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    width: '100%',  // <-- esta linha é essencial
+  },
+    conteudo: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
   },
   sectionTitle: {
     fontSize: 18,
@@ -185,9 +405,19 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 12
   },
-  label: {
-    fontWeight: "500",
-    marginTop: 10
+    label: {
+    width: "90%",
+    borderRadius: 25,
+    bottom: 5,
+    alignItems: "center",
+    fontSize:14,
+  },
+  botao: {
+    width: "90%",
+    borderRadius: 25,
+    padding: 20,
+    alignItems: "center",
+    fontSize:14,
   },
   readOnlyInput: {
     backgroundColor: "#f2f2f2",
@@ -196,18 +426,15 @@ const styles = StyleSheet.create({
     color: "#888"
   },
   input: {
-    borderColor: "#ccc",
+    width: "100%",
+    backgroundColor: "#f2f2f2",
+    borderRadius: 25,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    marginBottom: 15,
+    fontSize: 16,
     borderWidth: 1,
-    borderRadius: 8,
-    padding: 10,
-    marginTop: 8,
-    marginBottom: 4
-  },
-  pickerWrapper: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    marginTop: 8
+    borderColor: "#ddd",
   },
   listItem: {
     marginLeft: 10,
@@ -220,10 +447,11 @@ const styles = StyleSheet.create({
     marginTop: 8
   },
   contactCard: {
-    padding: 10,
+    padding: 15,
     backgroundColor: "#f0f0f0",
-    borderRadius: 8,
-    marginBottom: 10
+    borderRadius: 25,
+    marginBottom: 10,
+    
   },
   addButton: {
     backgroundColor: "#3BB2E4",
@@ -234,6 +462,82 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     color: "#fff",
-    fontWeight: "600"
-  }
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  backButton: {
+  marginBottom: 10,
+  paddingVertical: 6,
+  paddingHorizontal: 12,
+  alignSelf: 'flex-start',
+  backgroundColor: '#e0e0e0',
+  borderRadius: 8
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  logo: {
+  flex: 1,
+  height: 60,
+  tintColor: "#fff",
+},
+
+backButtonIcon: {
+  paddingRight: 10,
+  zIndex: 10,
+},
+
+iconStyle: {
+  width: 24,
+  height: 24,
+  tintColor: "#fff",
+},
+itemCard: {
+  padding: 10,
+  backgroundColor: "#f0f0f0",
+  borderRadius: 8,
+  marginBottom: 10,
+  width: "100%",
+},
+donorCard: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  backgroundColor: "#f0f0f0",
+  padding: 15,
+  borderRadius: 8,
+  width: "100%",
+  marginBottom: 10,
+},
+
+donorLabel: {
+  fontSize: 16,
+  fontWeight: "500",
+},
+
+donorStatus: {
+  alignSelf: "center",
+  fontSize: 14,
+  color: "#555",
+  marginBottom: 20,
+  marginTop: -5,
+},
+pickerContainer: {
+  width: "100%",
+  backgroundColor: "#f2f2f2",
+  borderRadius: 25,
+  marginBottom: 15,
+  borderWidth: 1,
+  padding:5,
+  borderColor: "#ddd",
+  overflow: "hidden"
+},
+picker: {
+  width: "100%",
+  height: 50,
+},
+
+
+
 });
