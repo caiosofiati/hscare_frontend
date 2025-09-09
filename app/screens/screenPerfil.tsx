@@ -1,10 +1,20 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export default function ProfileScreen() {
+  const navigation = useNavigation();
+
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={{ flexGrow: 1 }}>
       <LinearGradient
         colors={["#3BB2E4", "#6DD66D"]}
         start={{ x: 0, y: 0 }}
@@ -19,7 +29,7 @@ export default function ProfileScreen() {
           <Text style={styles.nomePaciente}>Nome do Paciente</Text>
         </View>
         <View style={styles.conteudoHeader}>
-            <TouchableOpacity style={styles.botaoEditar}>
+          <TouchableOpacity style={styles.botaoEditar}>
             <Ionicons name="create-outline" size={20} color="#fff" />
             <Text style={styles.textoEditar}>Editar</Text>
           </TouchableOpacity>
@@ -48,15 +58,36 @@ export default function ProfileScreen() {
           <Text style={styles.label}>CPF</Text>
           <Text style={styles.value}>123.456.789-00</Text>
         </View>
+
+        <View style={styles.infoBox}>
+          <Text style={styles.label}>Contatos</Text>
+          <Text style={styles.value}>codigo</Text>
+        </View>
+      </View>
+
+      <View style={styles.footerBotoes}>
+        <TouchableOpacity
+          style={styles.botaoFichaWrapper}
+          onPress={() => navigation.navigate("screenFichaMedica" as never)}
+        >
+          <LinearGradient
+            colors={["#3BB2E4", "#6DD66D"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.botaoFichaMedica}
+          >
+            <Text style={styles.textoFichaMedica}>Ficha Médica</Text>
+          </LinearGradient>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
+  container: { 
+    flex: 1, 
+    backgroundColor: "#fff" 
   },
   header: {
     alignItems: "center",
@@ -96,8 +127,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
-  infoContainer: {
-    padding: 20,
+  infoContainer: { 
+    padding: 20 
   },
   infoTitle: {
     fontSize: 18,
@@ -105,16 +136,48 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     color: "#333",
   },
-  infoBox: {
-    marginBottom: 15,
+  infoBox: { 
+    marginBottom: 15 
   },
-  label: {
-    fontSize: 14,
-    color: "#666",
+  label: { 
+    fontSize: 14, color: "#666" 
   },
-  value: {
+  value: { 
+    fontSize: 16, 
+    fontWeight: "500", 
+    color: "#000" 
+  },
+  footerBotoes: {
+    flexDirection: "row",
+    marginTop: "auto",
+    padding: 20,
+    gap: 12,
+  },
+  botaoFichaWrapper: { 
+    flex: 1,
+    borderRadius: 30, 
+    overflow: "hidden" 
+  },
+  botaoFichaMedica: {
+    paddingVertical: 14,
+    borderRadius: 30,
+    alignItems: "center",
+  },
+  textoFichaMedica: {
+    color: "#fff",
     fontSize: 16,
-    fontWeight: "500",
-    color: "#000",
+    fontWeight: "700",
+  },
+  botaoSair: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 30,
+    backgroundColor: "#E53935",
+    alignItems: "center",
+  },
+  textoSair: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
   },
 });

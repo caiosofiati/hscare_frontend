@@ -1,24 +1,44 @@
 import { Ionicons } from "@expo/vector-icons";
-import { DrawerContentComponentProps, DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
+import {
+  DrawerContentComponentProps,
+  DrawerContentScrollView,
+  DrawerItem,
+} from "@react-navigation/drawer";
 import { LinearGradient } from "expo-linear-gradient";
 import { Drawer } from "expo-router/drawer";
-import { Image, StyleSheet, Text, View } from "react-native";
+import {
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 function CustomDrawerContent(props: DrawerContentComponentProps) {
   return (
-    <DrawerContentScrollView {...props} contentContainerStyle={{ paddingTop: 0 }}>
+    <DrawerContentScrollView
+      {...props}
+      contentContainerStyle={{ paddingTop: 0 }}
+      style={{ flex: 1}} // remove padding lateral
+    >
+      {/* Header com gradiente ocupando toda a largura */}
       <LinearGradient
         colors={["#3BB2E4", "#6DD66D"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.drawerHeader}
       >
-        <Image
-          source={require("../../assets/images/hscare.png")}
-          style={styles.imagemPerfil}
-        />
-        <Text style={styles.nomePerfil}>Nome do Paciente</Text>
+        <TouchableOpacity
+          onPress={() => props.navigation.navigate("screenPerfil")}
+          style={{ flexDirection: "row", alignItems: "center" }}
+        >
+          <Image
+            source={require("../../assets/images/hscare.png")}
+            style={styles.imagemPerfil}
+          />
+          <Text style={styles.nomePerfil}>Nome do Paciente</Text>
+        </TouchableOpacity>
       </LinearGradient>
 
       <View style={styles.drawerItemsContainer}>
@@ -31,17 +51,6 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
           labelStyle={styles.drawerLabel}
           style={styles.drawerItem}
         />
-
-        <DrawerItem
-          label="Perfil"
-          icon={({ color, size }) => (
-            <Ionicons name="person-circle-outline" size={size} color={color} />
-          )}
-          onPress={() => props.navigation.navigate("screenPerfil")}
-          labelStyle={styles.drawerLabel}
-          style={styles.drawerItem}
-        />
-
       </View>
     </DrawerContentScrollView>
   );
@@ -69,6 +78,8 @@ const styles = StyleSheet.create({
   drawerHeader: {
     flexDirection: "row",
     alignItems: "center",
+    marginLeft: -15,
+    marginRight: -15,
     padding: 20,
   },
   imagemPerfil: {
@@ -85,15 +96,17 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   drawerItemsContainer: {
-    marginTop: 0,
-    paddingHorizontal: 0,
+    flex: 1,
+    width: "100%",
+    paddingHorizontal: 0, // remove padding lateral
   },
   drawerItem: {
-    marginHorizontal: 0,
     borderRadius: 0,
+    marginLeft: -15,
+    marginRight: -15,
   },
   drawerLabel: {
     fontSize: 16,
-    marginLeft: -8,
+    marginLeft: -4, // ajusta alinhamento do texto com ícone
   },
 });
