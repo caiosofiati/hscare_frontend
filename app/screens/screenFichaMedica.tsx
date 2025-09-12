@@ -11,7 +11,6 @@ import {
 } from "react-native";
 
 export default function Ficha_MedicaScreen() {
-  // Estados dos campos editáveis
   const [language, setLanguage] = useState("pt-BR");
 
   const [medicalCondition, setMedicalCondition] = useState("");
