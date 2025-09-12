@@ -54,18 +54,6 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 
       <View style={styles.drawerItemsContainer}>
         <DrawerItem
-          label="Perfil"
-          icon={({ color, size }) => (
-            <Ionicons name="person-circle-outline" size={size} color={color} />
-          )}
-          onPress={() => props.navigation.navigate("screenPerfil")}
-          labelStyle={styles.drawerLabel}
-          style={styles.drawerItem}
-        />
-      </View>
-
-      <View style={styles.drawerItemsContainer}>
-        <DrawerItem
           label="Ficha Médica"
           icon={({ color, size }) => (
             <Ionicons name="clipboard" size={size} color={color} />
