@@ -1,5 +1,7 @@
+import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
+import { DrawerActions, useNavigation } from '@react-navigation/native';
 import * as FileSystem from 'expo-file-system';
 import { LinearGradient } from "expo-linear-gradient";
 import * as Print from 'expo-print';
@@ -17,31 +19,27 @@ import {
 } from "react-native";
 
 export default function Ficha_MedicaScreen() {
+  const navigation = useNavigation();
   const [medicalCondition, setMedicalCondition] = useState("");
   const [medicalConditions, setMedicalConditions] = useState<string[]>([]);
-
   const [allergy, setAllergy] = useState("");
   const [allergies, setAllergies] = useState<string[]>([]);
-
   const [medication, setMedication] = useState("");
   const [medications, setMedications] = useState<string[]>([]);
-
   const [isDonor, setIsDonor] = useState(false);
-
   const addToList = (item: string, list: string[], setter: React.Dispatch<React.SetStateAction<string[]>>) => {
     if (item.trim() !== "") {
       setter([...list, item.trim()]);
     }
   };
-
-const [fullName, setFullName] = useState("Bagriel TchupaPika");
-const [birthDate, setBirthDate] = useState(new Date("1997-04-18"));
-const [showDatePicker, setShowDatePicker] = useState(false);
-const [age, setAge] = useState("23");
-const [gender, setGender] = useState("Masculino");
-const [bloodType, setBloodType] = useState("O+");
-const [height, setHeight] = useState("185"); 
-const [weight, setWeight] = useState("70");  
+  const [fullName, setFullName] = useState("Bagriel TchupaPika");
+  const [birthDate, setBirthDate] = useState(new Date("1997-04-18"));
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [age, setAge] = useState("23");
+  const [gender, setGender] = useState("Masculino");
+  const [bloodType, setBloodType] = useState("O+");
+  const [height, setHeight] = useState("185"); 
+  const [weight, setWeight] = useState("70");  
 
 const generatePDF = async () => {
 const htmlContent = `
@@ -101,21 +99,26 @@ const htmlContent = `
 
 return (
   <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+    <View style={styles.container}>
+      <LinearGradient
+        colors={["#3BB2E4", "#6DD66D"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}
+      >
+        <TouchableOpacity
+          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+          style={styles.menuButton}
+        >
+          <Ionicons name="menu" size={28} color="#fff" />
+        </TouchableOpacity>
 
-      <View style={styles.container}>
-        <LinearGradient
-                colors={["#3BB2E4", "#6DD66D"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.header}
-              >
-        
-          <Image
-                source={require("../../assets/images/hscare-bkg.png")}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-        </LinearGradient>
+        <Image
+          source={require("../../assets/images/hscare-bkg.png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+      </LinearGradient>
 
         <View style={styles.conteudo}>
           <Text style={styles.sectionTitle}>Informações pessoais</Text>
@@ -458,4 +461,7 @@ picker: {
   width: "100%",
   height: 50,
 },
+  menuButton: {
+    marginRight: -15,
+  },
 });
