@@ -68,7 +68,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
         <DrawerItem
           label="Ficha Médica"
           icon={({ color, size }) => (
-            <Ionicons name="person-circle-outline" size={size} color={color} />
+            <Ionicons name="clipboard" size={size} color={color} />
           )}
           onPress={() => props.navigation.navigate("screenFichaMedica")}
           labelStyle={styles.drawerLabel}
