@@ -32,7 +32,7 @@ export default function Ficha_MedicaScreen() {
       setter([...list, item.trim()]);
     }
   };
-  const [fullName, setFullName] = useState("Bagriel TchupaPika");
+  const [fullName, setFullName] = useState("Usuário HSCare");
   const [birthDate, setBirthDate] = useState(new Date("1997-04-18"));
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [age, setAge] = useState("23");
@@ -85,7 +85,7 @@ const htmlContent = `
   `;
 
   const { uri } = await Print.printToFileAsync({ html: htmlContent });
-  const newFileName = 'Ficha Médica Gabriel Tchupapika.pdf';
+  const newFileName = 'fichamedicaHsCare.pdf';
   const newPath = `${FileSystem.documentDirectory}${newFileName}`;
 
   await FileSystem.moveAsync({
@@ -159,7 +159,6 @@ return (
           >
             <Picker.Item label="Masculino" value="Masculino" />
             <Picker.Item label="Feminino" value="Feminino" />
-            <Picker.Item label="Geladeira Eletrolux" value="Geladeira Eletrolux" />
           </Picker>
         </View>
 
