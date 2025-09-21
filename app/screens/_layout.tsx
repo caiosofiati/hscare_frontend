@@ -63,6 +63,18 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
           style={styles.drawerItem}
         />
       </View>
+
+      <View style={styles.drawerItemsContainer}>
+        <DrawerItem
+          label="Perguntas e Respostas"
+          icon={({ color, size }) => (
+            <Ionicons name="help-circle-outline" size={size} color={color} />
+          )}
+          onPress={() => props.navigation.navigate("screenFaq")}
+          labelStyle={styles.drawerLabel}
+          style={styles.drawerItem}
+        />
+      </View>
     </DrawerContentScrollView>
   );
 }
