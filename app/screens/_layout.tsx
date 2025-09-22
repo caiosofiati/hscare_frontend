@@ -66,6 +66,18 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 
       <View style={styles.drawerItemsContainer}>
         <DrawerItem
+          label="Lembretes"
+          icon={({ color, size }) => (
+            <Ionicons name="time" size={size} color={color} />
+          )}
+          onPress={() => props.navigation.navigate("screenLembrete")}
+          labelStyle={styles.drawerLabel}
+          style={styles.drawerItem}
+        />
+      </View>
+
+      <View style={styles.drawerItemsContainer}>
+        <DrawerItem
           label="Perguntas e Respostas"
           icon={({ color, size }) => (
             <Ionicons name="help-circle-outline" size={size} color={color} />
