@@ -4,6 +4,7 @@ import {
   DrawerContentScrollView,
   DrawerItem,
 } from "@react-navigation/drawer";
+import { CommonActions } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Drawer } from "expo-router/drawer";
 import {
@@ -63,6 +64,41 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
           style={styles.drawerItem}
         />
       </View>
+
+      <View style={styles.drawerItemsContainer}>
+        <DrawerItem
+          label="Receitas"
+          icon={({ color, size }) => (
+            <Ionicons name="document-text-outline" size={size} color={color} />
+          )}
+          onPress={() => {props.navigation.
+            dispatch(CommonActions.navigate({name: "screenReceitasResultados",
+          params: { abaInicial: "Receitas" }, 
+      })
+    );
+  }}
+          labelStyle={styles.drawerLabel}
+          style={styles.drawerItem}
+        />
+      </View>
+
+        <View style={styles.drawerItemsContainer}>
+        <DrawerItem
+          label="Resultados"
+          icon={({ color, size }) => (
+            <Ionicons name="medkit-outline" size={size} color={color} />
+          )}
+          onPress={() => {props.navigation.
+            dispatch(CommonActions.navigate({name: "screenReceitasResultados",
+          params: { abaInicial: "Resultados" }, 
+              })
+            );
+          }}
+          labelStyle={styles.drawerLabel}
+          style={styles.drawerItem}
+        />
+      </View>
+
     </DrawerContentScrollView>
   );
 }
