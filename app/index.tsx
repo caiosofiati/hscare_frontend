@@ -42,7 +42,6 @@ export default function LoginScreen() {
       style={styles.container}
     >
       <View style={styles.innerContainer}>
-        {/* LOGO ANIMADA */}
         <Animated.Image
           source={require("../assets/images/hscare-bkg.png")}
           style={[
@@ -52,7 +51,6 @@ export default function LoginScreen() {
           resizeMode="contain"
         />
 
-        {/* CAMPO DE EMAIL */}
         <View style={styles.inputContainer}>
           <Ionicons name="mail-outline" size={20} color="#3BB2E4" />
           <TextInput
