@@ -19,9 +19,9 @@ import {
 
 export default function Ficha_MedicaScreen() {
   const navigation = useNavigation();
-  type RouteParams = { abaInicial?: "Receitas" | "Resultados" };
+  type RouteParams = { abaInicial?: "Receita" | "Resultado" };
   const route = useRoute<RouteProp<{ params: RouteParams }, 'params'>>();
-  const abaInicial = route.params?.abaInicial || "Receitas";
+  const abaInicial = route.params?.abaInicial || "Receita";
   const [abaSelecionada, setAbaSelecionada] = useState(abaInicial);
   useEffect(() => {
   if (route.params?.abaInicial && route.params.abaInicial !== abaSelecionada) {
@@ -155,11 +155,11 @@ export default function Ficha_MedicaScreen() {
           <View style={styles.abasContainer}>
             <TouchableOpacity
               style={[styles.aba,
-                abaSelecionada === "Receitas" && styles.abaSelecionada,
+                abaSelecionada === "Receita" && styles.abaSelecionada,
               ]}
-              onPress={() => setAbaSelecionada("Receitas")}
+              onPress={() => setAbaSelecionada("Receita")}
             >
-              <Text style={[styles.textoAba, abaSelecionada === "Receitas" && styles.textoAbaSelecionado,]}>
+              <Text style={[styles.textoAba, abaSelecionada === "Receita" && styles.textoAbaSelecionado,]}>
                 Receitas
               </Text>
             </TouchableOpacity>
@@ -167,17 +167,17 @@ export default function Ficha_MedicaScreen() {
             <TouchableOpacity
               style={[
                 styles.aba,
-                abaSelecionada === "Resultados" && styles.abaSelecionada,
+                abaSelecionada === "Resultado" && styles.abaSelecionada,
               ]}
-              onPress={() => setAbaSelecionada("Resultados")}
+              onPress={() => setAbaSelecionada("Resultado")}
             >
               <Text
                 style={[
                   styles.textoAba,
-                  abaSelecionada === "Resultados" && styles.textoAbaSelecionado,
+                  abaSelecionada === "Resultado" && styles.textoAbaSelecionado,
                 ]}
               >
-                Resultado de exames
+                Resultados de exames
               </Text>
             </TouchableOpacity>
           </View>
@@ -196,7 +196,7 @@ export default function Ficha_MedicaScreen() {
               >
                 <Text style={{ fontWeight: "bold" }}>{item.titulo}</Text>
                 <Text>{item.arquivo.fileName ?? "Sem nome"}</Text>
-                <Text style={{ fontStyle: "italic", color: "#666" }}>Tipo: {item.tipo}</Text>
+                <Text style={{ fontStyle: "italic", color: "#666" }}>Tipo: {item.tipo == "Receita" ? "Receita" : "Resultado de Exame" }</Text>
               </TouchableOpacity>
             ))}
           </View>

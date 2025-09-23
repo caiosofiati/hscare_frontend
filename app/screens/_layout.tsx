@@ -57,7 +57,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
         <DrawerItem
           label="Ficha Médica"
           icon={({ color, size }) => (
-            <Ionicons name="clipboard" size={size} color={color} />
+            <Ionicons name="clipboard-outline" size={size} color={color} />
           )}
           onPress={() => props.navigation.navigate("screenFichaMedica")}
           labelStyle={styles.drawerLabel}
@@ -73,7 +73,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
           )}
           onPress={() => {props.navigation.
             dispatch(CommonActions.navigate({name: "screenReceitasResultados",
-          params: { abaInicial: "Receitas" }, 
+          params: { abaInicial: "Receita" }, 
       })
     );
   }}
@@ -84,13 +84,13 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 
         <View style={styles.drawerItemsContainer}>
         <DrawerItem
-          label="Resultados"
+          label="Resultados de Exames"
           icon={({ color, size }) => (
             <Ionicons name="medkit-outline" size={size} color={color} />
           )}
           onPress={() => {props.navigation.
             dispatch(CommonActions.navigate({name: "screenReceitasResultados",
-          params: { abaInicial: "Resultados" }, 
+          params: { abaInicial: "Resultado" }, 
               })
             );
           }}
@@ -99,14 +99,26 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
         />
       </View>
 
-
       <View style={styles.drawerItemsContainer}>
         <DrawerItem
           label="Lembretes"
           icon={({ color, size }) => (
-            <Ionicons name="time" size={size} color={color} />
+            <Ionicons name="time-outline" size={size} color={color} />
           )}
           onPress={() => props.navigation.navigate("screenLembrete")}
+          labelStyle={styles.drawerLabel}
+          style={styles.drawerItem}
+        />
+      </View>
+
+      {/* aaaaaaaaaaa */}
+      <View style={styles.drawerItemsContainer}>
+        <DrawerItem
+          label="Chat BOT"
+          icon={({ color, size }) => (
+            <Ionicons name="chatbubbles-outline" size={size} color={color} />
+          )}
+          onPress={() => props.navigation.navigate("screenChatbot")}
           labelStyle={styles.drawerLabel}
           style={styles.drawerItem}
         />
