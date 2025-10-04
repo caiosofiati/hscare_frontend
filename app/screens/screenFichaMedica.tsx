@@ -97,7 +97,6 @@ export default function Ficha_MedicaScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
       <View style={styles.container}>
-        {/* HEADER */}
         <LinearGradient
           colors={["#3BB2E4", "#6DD66D"]}
           start={{ x: 0, y: 0 }}
@@ -118,15 +117,12 @@ export default function Ficha_MedicaScreen() {
           />
         </LinearGradient>
 
-        {/* CONTEÚDO */}
         <View style={styles.conteudo}>
           <Text style={styles.sectionTitle}>Informações pessoais</Text>
 
-          {/* Nome */}
           <Text style={styles.label}>Nome completo</Text>
           <TextInput value={fullName} onChangeText={setFullName} style={styles.inputMaior} />
 
-          {/* Data + Idade lado a lado */}
           <View style={styles.row}>
             <View style={styles.half}>
               <Text style={styles.label}>Data de nascimento</Text>
@@ -155,7 +151,6 @@ export default function Ficha_MedicaScreen() {
             />
           )}
 
-          {/* Gênero */}
           <Text style={styles.label}>Gênero</Text>
           <View style={styles.pickerContainer}>
             <Picker selectedValue={gender} onValueChange={(itemValue) => setGender(itemValue)} style={styles.picker}>
@@ -164,7 +159,6 @@ export default function Ficha_MedicaScreen() {
             </Picker>
           </View>
 
-          {/* Tipo sanguíneo */}
           <Text style={styles.label}>Tipo sanguíneo</Text>
           <View style={styles.pickerContainer}>
             <Picker selectedValue={bloodType} onValueChange={(itemValue) => setBloodType(itemValue)} style={styles.picker}>
@@ -179,7 +173,6 @@ export default function Ficha_MedicaScreen() {
             </Picker>
           </View>
 
-          {/* Altura + Peso lado a lado */}
           <View style={styles.row}>
             <View style={styles.half}>
               <Text style={styles.label}>Altura (cm)</Text>
@@ -191,7 +184,6 @@ export default function Ficha_MedicaScreen() {
             </View>
           </View>
 
-          {/* Condições médicas */}
           <Text style={styles.sectionTitle}>Condições médicas</Text>
           {medicalConditions.map((cond, idx) => (
             <View key={idx} style={styles.itemCard}><Text>🩺 {cond}</Text></View>
@@ -203,7 +195,6 @@ export default function Ficha_MedicaScreen() {
             </LinearGradient>
           </TouchableOpacity>
 
-          {/* Alergias */}
           <Text style={styles.sectionTitle}>Alergias</Text>
           {allergies.map((a, idx) => (
             <View key={idx} style={styles.itemCard}><Text>⚠️ {a}</Text></View>
@@ -215,7 +206,6 @@ export default function Ficha_MedicaScreen() {
             </LinearGradient>
           </TouchableOpacity>
 
-          {/* Medicamentos */}
           <Text style={styles.sectionTitle}>Medicamentos</Text>
           {medications.map((m, idx) => (
             <View key={idx} style={styles.itemCard}><Text>💊 {m}</Text></View>

@@ -1,20 +1,20 @@
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { DrawerActions, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
+import * as Notifications from "expo-notifications";
 import React, { useState } from "react";
 import {
   FlatList,
+  Image,
   Modal,
   Platform,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
-  Image,
-  TextInput,
 } from "react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { DrawerActions, useNavigation } from "@react-navigation/native";
-import * as Notifications from "expo-notifications";
 
 export default function ReminderScreen() {
   const navigation = useNavigation();
@@ -52,7 +52,6 @@ export default function ReminderScreen() {
 
     setLembretes((prev) => [...prev, novoLembrete]);
 
-    // Criar notificação
     await Notifications.scheduleNotificationAsync({
       content: {
         title: novoLembrete.titulo,
@@ -82,7 +81,6 @@ export default function ReminderScreen() {
 
   return (
     <View style={styles.container}>
-      {/* HEADER */}
       <LinearGradient
         colors={["#3BB2E4", "#6DD66D"]}
         start={{ x: 0, y: 0 }}
@@ -103,7 +101,6 @@ export default function ReminderScreen() {
         />
       </LinearGradient>
 
-      {/* LISTA DE LEMBRETES */}
       <FlatList
         data={lembretes}
         keyExtractor={(item) => item.id.toString()}
@@ -138,7 +135,6 @@ export default function ReminderScreen() {
         }
       />
 
-      {/* BOTÃO FLUTUANTE */}
       <TouchableOpacity
         style={styles.botaoAdicionar}
         onPress={() => setMostrarModal(true)}
@@ -153,13 +149,11 @@ export default function ReminderScreen() {
         </LinearGradient>
       </TouchableOpacity>
 
-      {/* MODAL DE CRIAÇÃO */}
       <Modal visible={mostrarModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitulo}>Novo Lembrete</Text>
 
-            {/* Título */}
             <TextInput
               placeholder="Título do lembrete"
               value={titulo}
@@ -167,7 +161,6 @@ export default function ReminderScreen() {
               style={styles.input}
             />
 
-            {/* Data */}
             <TouchableOpacity
               style={styles.modalBotao}
               onPress={() => setMostrarDatePicker(true)}
@@ -178,7 +171,6 @@ export default function ReminderScreen() {
               </Text>
             </TouchableOpacity>
 
-            {/* Hora */}
             <TouchableOpacity
               style={styles.modalBotao}
               onPress={() => setMostrarTimePicker(true)}
@@ -192,7 +184,6 @@ export default function ReminderScreen() {
               </Text>
             </TouchableOpacity>
 
-            {/* Dias da semana */}
             <View style={styles.diasContainer}>
               {diasSemana.map((dia) => (
                 <TouchableOpacity
@@ -214,7 +205,6 @@ export default function ReminderScreen() {
               ))}
             </View>
 
-            {/* Pickers */}
             {mostrarDatePicker && (
               <DateTimePicker
                 value={dataSelecionada}
@@ -252,7 +242,6 @@ export default function ReminderScreen() {
               />
             )}
 
-            {/* BOTÕES */}
             <View style={styles.modalFooter}>
               <TouchableOpacity
                 style={styles.cancelar}

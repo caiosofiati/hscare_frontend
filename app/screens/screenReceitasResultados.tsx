@@ -1,13 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions, RouteProp, useNavigation, useRoute } from '@react-navigation/native';
-import type { ImagePickerAsset } from 'expo-image-picker'; // <-- Importa o tipo corretamente
-import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from "expo-document-picker";
+import * as FileSystem from 'expo-file-system';
+import type { ImagePickerAsset } from 'expo-image-picker';
 import { LinearGradient } from "expo-linear-gradient";
+import * as WebBrowser from "expo-web-browser";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
   Image,
-  Linking,
   Modal,
   ScrollView,
   StyleSheet,
@@ -17,48 +18,82 @@ import {
   View
 } from "react-native";
 
+type ArquivoSelecionado = (ImagePickerAsset | DocumentPicker.DocumentPickerAsset) & {
+  fileName?: string;
+  name?: string;
+  mimeType?: string;
+  localUri?: string;
+};
+
+type Item = {
+  titulo: string;
+  arquivo: ArquivoSelecionado;
+  tipo: string;
+};
+
 export default function Ficha_MedicaScreen() {
   const navigation = useNavigation();
-  type RouteParams = { abaInicial?: "Receitas" | "Resultados" };
+  type RouteParams = { abaInicial?: "Receita" | "Resultado" };
   const route = useRoute<RouteProp<{ params: RouteParams }, 'params'>>();
-  const abaInicial = route.params?.abaInicial || "Receitas";
+  const abaInicial = route.params?.abaInicial || "Receita";
   const [abaSelecionada, setAbaSelecionada] = useState(abaInicial);
+
   useEffect(() => {
-  if (route.params?.abaInicial && route.params.abaInicial !== abaSelecionada) {
-    setAbaSelecionada(route.params.abaInicial);
-  }
+    if (route.params?.abaInicial && route.params.abaInicial !== abaSelecionada) {
+      setAbaSelecionada(route.params.abaInicial);
+    }
   }, [route.params?.abaInicial]);
 
-  
-  const escolherFoto = async () => {
-  try {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      quality: 1,
-    });
+  const salvarArquivoPermanente = async (uri: string, nomeArquivo: string) => {
+    try {
+      const dirInfo = await FileSystem.getInfoAsync(FileSystem.documentDirectory + 'ficha_medica/');
+      if (!dirInfo.exists) {
+        await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + 'ficha_medica/', { intermediates: true });
+      }
 
-    if (!result.canceled) {
-      setArquivo(result.assets[0]); 
+      const destino = FileSystem.documentDirectory + 'ficha_medica/' + Date.now() + '_' + nomeArquivo;
+      await FileSystem.copyAsync({ from: uri, to: destino });
+      console.log('Arquivo salvo em:', destino);
+      return destino;
+    } catch (error) {
+      console.log('Erro ao salvar arquivo:', error);
+      return uri;
     }
-  } catch (error) {
-    console.log("Erro ao escolher arquivo:", error);
-  }
-};
+  };
+
+  const escolherArquivo = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ["image/*", "application/pdf"],
+        copyToCacheDirectory: false,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const arquivo = result.assets[0];
+        
+        const localUri = await salvarArquivoPermanente(
+          arquivo.uri, 
+          arquivo.name || 'documento'
+        );
+        
+        setArquivo({ ...arquivo, localUri });
+      }
+    } catch (error) {
+      console.log("Erro ao escolher arquivo:", error);
+    }
+  };
+
   const [modalVisible, setModalVisible] = useState(false);
   const fecharModal = () => {
-  setModalVisible(false);
-  setArquivo(null);
-  setTitulo("");
+    setModalVisible(false);
+    setArquivo(null);
+    setTitulo("");
   };
 
   const [titulo, setTitulo] = useState("");
-  const [arquivo, setArquivo] = useState<ImagePickerAsset | null>(null);
-  const [itens, setItens] = useState<
-  { titulo: string; arquivo: ImagePickerAsset; tipo: string }[]
-  >([]);
+  const [arquivo, setArquivo] = useState<ArquivoSelecionado | null>(null);
+  const [itens, setItens] = useState<Item[]>([]);
   const itensFiltrados = itens.filter((item) => item.tipo === abaSelecionada);
-
 
   const gravar = async () => {
     if (!titulo.trim()) {
@@ -67,8 +102,8 @@ export default function Ficha_MedicaScreen() {
     }
 
     if (!arquivo) {
-    Alert.alert("Atenção", "Escolha pelo menos um arquivo antes de gravar.");
-    return;
+      Alert.alert("Atenção", "Escolha pelo menos um arquivo antes de gravar.");
+      return;
     }
 
     setItens((prev) => [
@@ -82,26 +117,21 @@ export default function Ficha_MedicaScreen() {
 
     setTitulo("");
     setArquivo(null);
-    setModalVisible(false); 
+    setModalVisible(false);
   };
 
-  
   const [modalItemVisible, setModalItemVisible] = useState(false);
-  const [itemSelecionado, setItemSelecionado] = useState<{
-    titulo: string;
-    arquivo: ImagePickerAsset;
-    tipo: string;
-  } | null>(null);
-  
+  const [itemSelecionado, setItemSelecionado] = useState<Item | null>(null);
   const [editando, setEditando] = useState(false);
+  const [indiceSelecionado, setIndiceSelecionado] = useState<number | null>(null);
+
   const toggleEdit = () => {
     if (editando && indiceSelecionado !== null) {
-      // Atualiza item na lista
       setItens((prev) => {
         const novos = [...prev];
         novos[indiceSelecionado] = {
           ...novos[indiceSelecionado],
-          titulo: titulo, // aplica edição
+          titulo: titulo,
         };
         return novos;
       });
@@ -113,24 +143,36 @@ export default function Ficha_MedicaScreen() {
     setEditando(!editando);
   };
 
-  const [indiceSelecionado, setIndiceSelecionado] = useState<number | null>(null);
+  const abrirPDF = async () => {
+    if (!itemSelecionado?.arquivo) {
+      console.log("Erro: Nenhum arquivo selecionado.");
+      return;
+    }
 
-  const removerItem = () => {
-  if (indiceSelecionado !== null) {
-    setItens((prev) => prev.filter((_, i) => i !== indiceSelecionado));
-    setModalItemVisible(false); // fecha modal após excluir
-    setItemSelecionado(null);
-    setIndiceSelecionado(null);
-    setTitulo("");
-  }
+    const arquivo = itemSelecionado.arquivo;
+
+    if (!arquivo.mimeType?.startsWith("application/pdf")) {
+      console.log("Erro: Arquivo selecionado não é um PDF.");
+      return;
+    }
+
+    const uri = arquivo.localUri || arquivo.uri;
+    if (!uri) {
+      console.log("Erro: URI do arquivo não encontrado.");
+      return;
+    }
+
+    try {
+      await WebBrowser.openBrowserAsync(uri);
+    } catch (error) {
+      console.log("Erro ao abrir PDF:", error);
+    }
   };
-
 
   return (
     <View style={{ flex: 1 }}>
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
         <View style={styles.container}>
-          {/* HEADER */}
           <LinearGradient
             colors={["#3BB2E4", "#6DD66D"]}
             start={{ x: 0, y: 0 }}
@@ -151,54 +193,71 @@ export default function Ficha_MedicaScreen() {
             />
           </LinearGradient>
 
-          {/* TOGGLE DE ABAS */}
           <View style={styles.abasContainer}>
             <TouchableOpacity
-              style={[styles.aba,
-                abaSelecionada === "Receitas" && styles.abaSelecionada,
-              ]}
-              onPress={() => setAbaSelecionada("Receitas")}
+              style={[styles.aba, abaSelecionada === "Receita" && styles.abaSelecionada]}
+              onPress={() => setAbaSelecionada("Receita")}
             >
-              <Text style={[styles.textoAba, abaSelecionada === "Receitas" && styles.textoAbaSelecionado,]}>
+              <Text style={[styles.textoAba, abaSelecionada === "Receita" && styles.textoAbaSelecionado]}>
                 Receitas
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[
-                styles.aba,
-                abaSelecionada === "Resultados" && styles.abaSelecionada,
-              ]}
-              onPress={() => setAbaSelecionada("Resultados")}
+              style={[styles.aba, abaSelecionada === "Resultado" && styles.abaSelecionada]}
+              onPress={() => setAbaSelecionada("Resultado")}
             >
-              <Text
-                style={[
-                  styles.textoAba,
-                  abaSelecionada === "Resultados" && styles.textoAbaSelecionado,
-                ]}
-              >
-                Resultado de exames
+              <Text style={[styles.textoAba, abaSelecionada === "Resultado" && styles.textoAbaSelecionado]}>
+                Resultados de exames
               </Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.conteudoCorpo}>
-            {itensFiltrados.map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                style={{ marginBottom: 15, padding: 10, backgroundColor: "#f9f9f9", borderRadius: 8 }}
-                onPress={() => {
-                  setItemSelecionado(item);
-                  setIndiceSelecionado(index);
-                  setTitulo(item.titulo);
-                  setModalItemVisible(true);
-                }}
-              >
-                <Text style={{ fontWeight: "bold" }}>{item.titulo}</Text>
-                <Text>{item.arquivo.fileName ?? "Sem nome"}</Text>
-                <Text style={{ fontStyle: "italic", color: "#666" }}>Tipo: {item.tipo}</Text>
-              </TouchableOpacity>
-            ))}
+            {itensFiltrados.map((item, index) => {
+              const indexReal = itens.findIndex(i => i === item);
+              return (
+                <View key={indexReal} style={styles.itemCard}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setItemSelecionado(item);
+                      setIndiceSelecionado(indexReal);
+                      setTitulo(item.titulo);
+                      setModalItemVisible(true);
+                    }}
+                  >
+                    <Text style={styles.itemTitulo}>{item.titulo}</Text>
+                    <Text style={styles.itemSubtitulo}>{item.arquivo.fileName || item.arquivo.name || "Sem nome"}</Text>
+                    <Text style={styles.itemTipo}>
+                      Tipo: {item.tipo === "Receita" ? "Receita" : "Resultado de Exame"}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.botaoRemover}
+                    onPress={() =>
+                      Alert.alert(
+                        "Confirmação",
+                        "Você deseja realmente excluir este item?",
+                        [
+                          { text: "Cancelar", style: "cancel" },
+                          {
+                            text: "Excluir",
+                            style: "destructive",
+                            onPress: () => {
+                              setItens((prev) => prev.filter((_, i) => i !== indexReal));
+                            },
+                          },
+                        ]
+                      )
+                    }
+                  >
+                    <Ionicons name="trash-outline" size={20} color="#fff" />
+                    <Text style={styles.textoEditar}>Excluir</Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
           </View>
         </View>
       </ScrollView>
@@ -214,24 +273,13 @@ export default function Ficha_MedicaScreen() {
         </LinearGradient>
       </TouchableOpacity>
 
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => fecharModal()}
-      >
+      <Modal visible={modalVisible} animationType="slide" transparent={true} onRequestClose={() => fecharModal()}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-
-            {/* BOTÃO X PARA FECHAR */}
-            <TouchableOpacity 
-              style={styles.botaoFecharX} 
-              onPress={() => fecharModal()}
-            >
+            <TouchableOpacity style={styles.botaoFecharX} onPress={() => fecharModal()}>
               <Ionicons name="close" size={22} color="#333" />
             </TouchableOpacity>
 
-            {/* ENTRY */}
             <TextInput
               style={styles.input}
               placeholder="Título"
@@ -240,8 +288,7 @@ export default function Ficha_MedicaScreen() {
               onChangeText={setTitulo}
             />
 
-            {/* BOTÃO INSERIR ARQUIVOS */}
-            <TouchableOpacity onPress={() => escolherFoto()} style={{ width: "100%" }}>
+            <TouchableOpacity onPress={() => escolherArquivo()} style={{ width: "100%" }}>
               <LinearGradient
                 colors={["#3BB2E4", "#6DD66D"]}
                 start={{ x: 0, y: 0 }}
@@ -249,11 +296,12 @@ export default function Ficha_MedicaScreen() {
                 style={styles.botaoInserirModal}
               >
                 <Ionicons name="cloud-upload-outline" size={22} color="#fff" style={{ marginRight: 8 }} />
-                <Text style={styles.textoBotaoModal}>{arquivo?.fileName || "Selecionar arquivo"}</Text>
+                <Text style={styles.textoBotaoModal}>
+                  {arquivo?.fileName || arquivo?.name || "Selecionar arquivo"}
+                </Text>
               </LinearGradient>
             </TouchableOpacity>
 
-            {/* BOTÃO GRAVAR */}
             <TouchableOpacity onPress={() => gravar()} style={{ width: "100%" }}>
               <LinearGradient
                 colors={["#3BB2E4", "#6DD66D"]}
@@ -265,7 +313,6 @@ export default function Ficha_MedicaScreen() {
                 <Text style={styles.textoBotaoModal}>Gravar</Text>
               </LinearGradient>
             </TouchableOpacity>
-
           </View>
         </View>
       </Modal>
@@ -278,86 +325,44 @@ export default function Ficha_MedicaScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-
-            {/* Botão fechar */}
-            <TouchableOpacity
-              style={styles.botaoFecharX}
-              onPress={() => setModalItemVisible(false)}
-            >
+            <TouchableOpacity style={styles.botaoFecharX} onPress={() => setModalItemVisible(false)}>
               <Ionicons name="close" size={22} color="#333" />
             </TouchableOpacity>
 
-            {/* Conteúdo */}
-            {itemSelecionado && (
-              <>
-
-                {/* ENTRY */}
-                {editando ? (
-                <TextInput
-                  style={styles.input}
-                  value={titulo}
-                  onChangeText={setTitulo}
-                />
-              ) : (
-                <Text style={{ fontSize: 16, fontWeight: "500", color: "#000", marginBottom: 15 }}>
-                  {titulo}
-                </Text>
-              )}
-
-                {/* Verifica se é imagem */}
-                {itemSelecionado.arquivo.type?.startsWith("image") ? (
-                  <Image
-                    source={{ uri: itemSelecionado.arquivo.uri }}
-                    style={{ width: 250, height: 250, borderRadius: 12, marginBottom: 10 }}
-                    resizeMode="contain"
-                  />
-                ) : (
-                  <TouchableOpacity
-                    onPress={() => Linking.openURL(itemSelecionado.arquivo.uri)}
-                    style={{
-                      padding: 12,
-                      backgroundColor: "#3BB2E4",
-                      borderRadius: 10,
-                      marginTop: 10,
-                    }}
-                  >
-                    <Text style={{ color: "#fff", fontWeight: "600" }}>
-                      Abrir PDF
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </>
+            {itemSelecionado?.arquivo?.mimeType?.startsWith("image/") ? (
+              <Image
+                source={{ uri: itemSelecionado?.arquivo?.localUri || itemSelecionado?.arquivo?.uri }}
+                style={{ width: 250, height: 250, borderRadius: 12, marginBottom: 10 }}
+                resizeMode="contain"
+              />
+            ) : (
+              itemSelecionado?.arquivo && itemSelecionado?.arquivo.mimeType?.startsWith("application/pdf") && (
+                <TouchableOpacity
+                  onPress={abrirPDF}
+                  style={{
+                    padding: 12,
+                    backgroundColor: "#3BB2E4",
+                    borderRadius: 10,
+                    marginTop: 10,
+                  }}
+                >
+                  <Text style={{ color: "#fff", fontWeight: "600" }}>Abrir PDF</Text>
+                </TouchableOpacity>
+              )
             )}
 
             <View style={styles.contatoItem}>
-              <TouchableOpacity style={[styles.botaoEditar, { right: editando ? 30 : 0 } ]} onPress={toggleEdit}>
-              <Ionicons
-                name={editando ? "save-outline" : "create-outline"}
-                size={20}
-                color="#fff"
-              />
-              <Text style={styles.textoEditar}>
-                {editando ? "Salvar" : "Editar"}
-              </Text>
+              <TouchableOpacity style={[styles.botaoEditar, { right: 0 }]} onPress={toggleEdit}>
+                <Ionicons name={editando ? "save-outline" : "create-outline"} size={20} color="#fff" />
+                <Text style={styles.textoEditar}>{editando ? "Salvar" : "Editar"}</Text>
               </TouchableOpacity>
-
-              {/* //// */}
-              {editando && (
-                <TouchableOpacity style={styles.botaoRemover} onPress={removerItem}>
-                  <Ionicons name="trash-outline" size={20} color="#fff" />
-                  <Text style={styles.textoEditar}>Excluir</Text>
-                </TouchableOpacity>
-              )}
             </View>
           </View>
         </View>
       </Modal>
-
     </View>
   );
 }
-
-
 
 const styles = StyleSheet.create({
   container: {
@@ -374,14 +379,12 @@ const styles = StyleSheet.create({
   botao: {
     borderRadius: 10,
     padding: 15,
-    //justifyContent: "center",    
-    //alignItems: "center",    
   },
   logo: {
-  flex: 1,
-  height: 60,
-  tintColor: "#fff",
-},
+    flex: 1,
+    height: 60,
+    tintColor: "#fff",
+  },
   menuButton: {
     marginRight: -15,
   },
@@ -392,7 +395,7 @@ const styles = StyleSheet.create({
     textAlign: "center",      
     width: "100%",              
   },
-buttonRow: {
+  buttonRow: {
     flexDirection: "row",
     width: "100%",
     marginTop: 10,
@@ -415,39 +418,39 @@ buttonRow: {
     justifyContent: "center",
   },
   abasContainer: {
-  flexDirection: "row",
-  borderBottomWidth: 1,
-  borderBottomColor: "#ffffffff",
-  marginTop: 0,
-},
-aba: {
-  flex: 1,
-  paddingVertical: 12,
-  alignItems: "center",
-  backgroundColor: "#f0f0f0",
-},
-abaSelecionada: {
-  backgroundColor: "#e0e0e0",
-},
-textoAba: {
-  fontSize: 16,
-  color: "#999",
-  fontWeight: "500",
-},
-textoAbaSelecionado: {
-  color: "#333",
-  fontWeight: "700",
-},
-conteudoCorpo: {
-  padding: 20,
-  alignItems: "center",
-  justifyContent: "center",
-},
-textoConteudo: {
-  fontSize: 18,
-  color: "#333",
-},
-modalOverlay: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: "#ffffffff",
+    marginTop: 0,
+  },
+  aba: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: "center",
+    backgroundColor: "#f0f0f0",
+  },
+  abaSelecionada: {
+    backgroundColor: "#e0e0e0",
+  },
+  textoAba: {
+    fontSize: 16,
+    color: "#999",
+    fontWeight: "500",
+  },
+  textoAbaSelecionado: {
+    color: "#333",
+    fontWeight: "700",
+  },
+  conteudoCorpo: {
+    padding: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  textoConteudo: {
+    fontSize: 18,
+    color: "#333",
+  },
+  modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
@@ -461,87 +464,113 @@ modalOverlay: {
     alignItems: "center",
   },
   input: {
-  width: "100%",
-  borderWidth: 1,
-  borderColor: "#ccc",
-  borderRadius: 10,
-  padding: 10,
-  marginBottom: 15,  // espaço consistente entre o input e o botão
-},
-botaoInserir: {
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "center",   // centraliza tudo
-  borderRadius: 12,
-  paddingVertical: 14,
-  paddingHorizontal: 20,
-},
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 15,
+  },
+  botaoInserir: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+  },
   fechar: {
     marginTop: 20,
   },
-botaoInserirModal: {
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "center",
-  borderRadius: 10,
-  paddingVertical: 14,
-  paddingHorizontal: 12, // novo
-  width: "100%",
-  overflow: "hidden",    // evita vazamento
-},
-
-textoBotaoModal: {
-  color: "#fff",
-  fontSize: 16,
-  fontWeight: "600",
-  flexShrink: 1,          // permite o texto encolher
-},
-botaoFecharX: {
-  position: "fixed",
-  top: -5,
-  right: 0,
-  left: 155,
-  marginBottom:10,
-  borderRadius:10,
-  backgroundColor:"#e0ddddff",
-},
+  botaoInserirModal: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    width: "100%",
+    overflow: "hidden",
+  },
+  textoBotaoModal: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+    flexShrink: 1,
+  },
+  botaoFecharX: {
+    position: "fixed",
+    top: -5,
+    right: 0,
+    left: 155,
+    marginBottom: 10,
+    borderRadius: 10,
+    backgroundColor: "#e0ddddff",
+  },
   botaoInserirGravar: {
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "center",
-  borderRadius: 10,
-  paddingVertical: 14,
-  marginTop:15,
-  width: "100%",     // ocupa tudo dentro do modal
-},
-botaoEditar: {
-  flexDirection: "row",
-  alignItems: "center",
-  backgroundColor: "#3BB2E4",
-  paddingHorizontal: 14,
-  paddingVertical: 10,
-  borderRadius: 8,
-  marginTop: 15,
-},
-textoEditar: {
-  color: "#fff",
-  fontSize: 16,
-  fontWeight: "600",
-},
-botaoRemover: {
-  flexDirection: "row",
-  alignItems: "center",
-  backgroundColor: "#d11a1aff",
-  paddingHorizontal: 14,
-  paddingVertical: 10,
-  borderRadius: 8,
-  marginTop: 15,
-  left: 30
-},
-contatoItem: {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingVertical: 6,
-},
-
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10,
+    paddingVertical: 14,
+    marginTop: 15,
+    width: "100%",
+  },
+  botaoEditar: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#3BB2E4",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 15,
+  },
+  textoEditar: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  botaoRemover: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#d11a1a",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    alignSelf: "flex-end",
+    marginTop: 10,
+  },
+  contatoItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+  },
+  itemCard: {
+    width: "100%",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 15,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  itemTitulo: {
+    fontWeight: "700",
+    fontSize: 16,
+    marginBottom: 4,
+    color: "#333",
+  },
+  itemSubtitulo: {
+    fontSize: 14,
+    color: "#666",
+  },
+  itemTipo: {
+    fontSize: 13,
+    fontStyle: "italic",
+    color: "#3BB2E4",
+    marginTop: 4,
+  },
 });
