@@ -10,11 +10,15 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { login } from "./hooks/loginHook.ts";
+import { retornarDadosUsuario } from "./hooks/retornarDadosUsuarioHook.ts";
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [message, setMessage] = useState<string>("");
+  const [token, setToken] = useState<string>("");
 
   const animacaoFade = useRef(new Animated.Value(0)).current;
   const scaleDaAnimacao = useRef(new Animated.Value(0.8)).current;
@@ -33,6 +37,29 @@ export default function LoginScreen() {
       }),
     ]).start();
   }, []);
+
+  async function handleLogin() {
+    try {
+      const data = await login(email, password);
+      router.push("../screens/screenHome");
+
+      setToken(data);
+      setMessage("✅ Login realizado com sucesso!");
+    } catch (err) {
+      setMessage("❌ Falha no login. Verifique seus dados.");
+
+      console.log(err);
+    }
+  }
+
+  async function handleProfile() {
+    try {
+      const data = await retornarDadosUsuario(email, token);
+    } catch (err) {
+
+      console.log(err);
+    }
+  }
 
   return (
     <LinearGradient
@@ -79,7 +106,7 @@ export default function LoginScreen() {
 
         <TouchableOpacity
           style={{ width: "100%", marginTop: 10, marginBottom: 20 }}
-          onPress={() => router.push("../screens/screenHome")}
+          onPress={handleLogin}
         >
           <LinearGradient
             colors={["#3BB2E4", "#3BB2E4"]}
@@ -128,7 +155,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 12,
     marginBottom: 15,
-    elevation: 3, // sombra leve
+    elevation: 3,
   },
   input: {
     flex: 1,
