@@ -22,7 +22,7 @@ type ArquivoSelecionado = (ImagePickerAsset | DocumentPicker.DocumentPickerAsset
   fileName?: string;
   name?: string;
   mimeType?: string;
-  localUri?: string; // URI permanente
+  localUri?: string;
 };
 
 type Item = {
@@ -44,7 +44,6 @@ export default function Ficha_MedicaScreen() {
     }
   }, [route.params?.abaInicial]);
 
-  // Salva arquivo permanentemente
   const salvarArquivoPermanente = async (uri: string, nomeArquivo: string) => {
     try {
       const dirInfo = await FileSystem.getInfoAsync(FileSystem.documentDirectory + 'ficha_medica/');
@@ -72,7 +71,6 @@ export default function Ficha_MedicaScreen() {
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const arquivo = result.assets[0];
         
-        // Salva o arquivo permanentemente
         const localUri = await salvarArquivoPermanente(
           arquivo.uri, 
           arquivo.name || 'documento'
@@ -145,7 +143,6 @@ export default function Ficha_MedicaScreen() {
     setEditando(!editando);
   };
 
-  // Função para abrir PDF
   const abrirPDF = async () => {
     if (!itemSelecionado?.arquivo) {
       console.log("Erro: Nenhum arquivo selecionado.");
@@ -154,13 +151,11 @@ export default function Ficha_MedicaScreen() {
 
     const arquivo = itemSelecionado.arquivo;
 
-    // Verifica se o mimeType é válido para PDF
     if (!arquivo.mimeType?.startsWith("application/pdf")) {
       console.log("Erro: Arquivo selecionado não é um PDF.");
       return;
     }
 
-    // Verifica se existe um URI válido para o arquivo
     const uri = arquivo.localUri || arquivo.uri;
     if (!uri) {
       console.log("Erro: URI do arquivo não encontrado.");
@@ -168,7 +163,6 @@ export default function Ficha_MedicaScreen() {
     }
 
     try {
-      // Abre o PDF no navegador ou visualizador
       await WebBrowser.openBrowserAsync(uri);
     } catch (error) {
       console.log("Erro ao abrir PDF:", error);
@@ -179,7 +173,6 @@ export default function Ficha_MedicaScreen() {
     <View style={{ flex: 1 }}>
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
         <View style={styles.container}>
-          {/* HEADER */}
           <LinearGradient
             colors={["#3BB2E4", "#6DD66D"]}
             start={{ x: 0, y: 0 }}
@@ -200,7 +193,6 @@ export default function Ficha_MedicaScreen() {
             />
           </LinearGradient>
 
-          {/* TOGGLE DE ABAS */}
           <View style={styles.abasContainer}>
             <TouchableOpacity
               style={[styles.aba, abaSelecionada === "Receita" && styles.abaSelecionada]}
@@ -241,7 +233,6 @@ export default function Ficha_MedicaScreen() {
                     </Text>
                   </TouchableOpacity>
 
-                  {/* Botão de Remover */}
                   <TouchableOpacity
                     style={styles.botaoRemover}
                     onPress={() =>
@@ -326,7 +317,6 @@ export default function Ficha_MedicaScreen() {
         </View>
       </Modal>
 
-      {/* MODAL ITEM */}
       <Modal
         visible={modalItemVisible}
         animationType="fade"

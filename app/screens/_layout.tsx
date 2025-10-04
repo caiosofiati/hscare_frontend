@@ -111,7 +111,6 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
         />
       </View>
 
-      {/* aaaaaaaaaaa */}
       <View style={styles.drawerItemsContainer}>
         <DrawerItem
           label="Chat BOT"

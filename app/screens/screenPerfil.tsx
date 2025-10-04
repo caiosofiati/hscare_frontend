@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
   FlatList,
@@ -20,7 +20,6 @@ export default function ProfileScreen() {
   const [editando, setEditando] = useState(false);
   const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
 
-  // BUSCAR ESSES DADOS DO BANCO
   const [perfil, setPerfil] = useState({
     email: "email@email.com",
     telefone: "(19) 99999-9999",
@@ -28,7 +27,6 @@ export default function ProfileScreen() {
     cpf: "123.456.789-00",
   });
 
-  // BUSCAR ESSES DADOS DO BANCO
   const [contatos, setContatos] = useState<
     { nome: string; telefone: string }[]
   >([
@@ -44,7 +42,6 @@ export default function ProfileScreen() {
 
   const toggleEdit = () => {
     if (editando) {
-      // ADICIONAR A LOGICA DE SALVAR NO BANCO
       console.log("Salvando perfil:", perfil, "Contatos:", contatos);
     }
     setEditando(!editando);
