@@ -10,15 +10,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { login } from "./hooks/loginHook.ts";
-import { retornarDadosUsuario } from "./hooks/retornarDadosUsuarioHook.ts";
+import { login } from "./hooks/loginHook";
+import { salvarDados } from "./hooks/salvarDadosDoUsuarioEmCache";
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState<string>("");
-  const [token, setToken] = useState<string>("");
 
   const animacaoFade = useRef(new Animated.Value(0)).current;
   const scaleDaAnimacao = useRef(new Animated.Value(0.8)).current;
@@ -43,20 +41,9 @@ export default function LoginScreen() {
       const data = await login(email, password);
       router.push("../screens/screenHome");
 
-      setToken(data);
-      setMessage("✅ Login realizado com sucesso!");
+      salvarDados("usuario", JSON.stringify(data.usuario));
+      salvarDados("token", String(data.token));
     } catch (err) {
-      setMessage("❌ Falha no login. Verifique seus dados.");
-
-      console.log(err);
-    }
-  }
-
-  async function handleProfile() {
-    try {
-      const data = await retornarDadosUsuario(email, token);
-    } catch (err) {
-
       console.log(err);
     }
   }

@@ -6,7 +6,7 @@ import * as FileSystem from 'expo-file-system';
 import { LinearGradient } from "expo-linear-gradient";
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Image,
   ScrollView,
@@ -17,6 +17,7 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+import { buscarDados } from '../hooks/buscarDadosDoUsuarioEmCache';
 
 export default function Ficha_MedicaScreen() {
   const navigation = useNavigation();
@@ -37,6 +38,30 @@ export default function Ficha_MedicaScreen() {
   const [bloodType, setBloodType] = useState("O+");
   const [height, setHeight] = useState("185"); 
   const [weight, setWeight] = useState("70");  
+
+  const [usuario, setUsuario] = useState<{ _id: string,  nome: string, email: string, telefone: string, endereco: string, cpf: string } | null>({
+    _id: "123",
+    nome: "Nome do Paciente",
+    email: "email@email.com",
+    telefone: "(19) 99999-9999",
+    endereco: "Rua Exemplo, 123 - São Paulo, SP",
+    cpf: "123.456.789-00",
+  });
+    
+      useEffect(() => {
+        const carregarUsuario = async () => {
+          try {
+            const dados = await buscarDados("usuario");
+            if (dados) {
+              setUsuario(JSON.parse(dados));
+            }
+          } catch (e) {
+            console.error("Erro ao carregar usuário:", e);
+          }
+        };
+    
+        carregarUsuario();
+      }, []);
 
   const addToList = (item: string, list: string[], setter: React.Dispatch<React.SetStateAction<string[]>>) => {
     if (item.trim() !== "") {
@@ -59,7 +84,7 @@ export default function Ficha_MedicaScreen() {
           <h1>Ficha Médica</h1>
           
           <h2>Informações Pessoais</h2>
-          <p><strong>Nome:</strong> ${fullName}</p>
+          <p><strong>Nome:</strong> ${usuario.nome}</p>
           <p><strong>Data de nascimento:</strong> ${birthDate.toLocaleDateString("pt-BR")}</p>
           <p><strong>Idade:</strong> ${age} anos</p>
           <p><strong>Gênero:</strong> ${gender}</p>
@@ -121,7 +146,7 @@ export default function Ficha_MedicaScreen() {
           <Text style={styles.sectionTitle}>Informações pessoais</Text>
 
           <Text style={styles.label}>Nome completo</Text>
-          <TextInput value={fullName} onChangeText={setFullName} style={styles.inputMaior} />
+          <Text style={styles.inputMaior}>{usuario.nome}</Text>
 
           <View style={styles.row}>
             <View style={styles.half}>

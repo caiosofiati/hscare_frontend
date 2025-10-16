@@ -1,10 +1,29 @@
 import { Ionicons } from "@expo/vector-icons";
 import { DrawerActions, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { buscarDados } from "../hooks/buscarDadosDoUsuarioEmCache";
 
 export default function HomeScreen() {
   const navigation = useNavigation();
+
+    const [usuario, setUsuario] = useState<{ nome: string } | null>({ nome: 'Nome do Paciente' });
+  
+    useEffect(() => {
+      const carregarUsuario = async () => {
+        try {
+          const dados = await buscarDados("usuario");
+          if (dados) {
+            setUsuario(JSON.parse(dados));
+          }
+        } catch (e) {
+          console.error("Erro ao carregar usuário:", e);
+        }
+      };
+  
+      carregarUsuario();
+    }, []);
 
   return (
     <View style={styles.container}>
@@ -29,7 +48,7 @@ export default function HomeScreen() {
       </LinearGradient>
 
       <View style={styles.conteudo}>
-        <Text>Bem-vindo ao HSCare ! 👋</Text>
+        <Text>Bem-vindo ao HSCare, {usuario.nome || 'Nome do Paciente'} ! 👋</Text>
       </View>
 
     </View>

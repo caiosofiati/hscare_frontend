@@ -5,16 +5,19 @@ const api = axios.create({
   timeout: 5000,
 });
 
-export async function retornarDadosUsuario(email: string, token: string) {
+export async function buscarFicaMedica(idUsuario: string, token: string) {
   try {
       const headers = {
           'authorization': `Bearer ${token}`,
-          email
       };
 
-    const response = await api.get(`/usuario/buscarPorEmail`, {headers});
+      const params = {
+          idUsuario
+      }
 
-    console.log("Retorno do profile:", response.data)
+    const response = await api.get(`/fichaMedica`, {headers, params});
+
+    console.log("Retorno da  ficha medica :", response.data)
     return response.data;
   } catch (error: any) {
     console.error("Erro no profile:", error);

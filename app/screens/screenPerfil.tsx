@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FlatList,
   Image,
@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { buscarDados } from "../hooks/buscarDadosDoUsuarioEmCache";
 
 export default function ProfileScreen() {
   const navigation = useNavigation();
@@ -20,12 +21,28 @@ export default function ProfileScreen() {
   const [editando, setEditando] = useState(false);
   const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
 
-  const [perfil, setPerfil] = useState({
+  const [usuario, setUsuario] = useState<{ nome: string, email: string, telefone: string, endereco: string, cpf: string } | null>({
+    nome: "Nome do Paciente",
     email: "email@email.com",
     telefone: "(19) 99999-9999",
     endereco: "Rua Exemplo, 123 - São Paulo, SP",
     cpf: "123.456.789-00",
   });
+
+  useEffect(() => {
+    const carregarUsuario = async () => {
+      try {
+        const dados = await buscarDados("usuario");
+        if (dados) {
+          setUsuario(JSON.parse(dados));
+        }
+      } catch (e) {
+        console.error("Erro ao carregar usuário:", e);
+      }
+    };
+
+    carregarUsuario();
+  }, []);
 
   const [contatos, setContatos] = useState<
     { nome: string; telefone: string }[]
@@ -36,13 +53,14 @@ export default function ProfileScreen() {
 
   const [novoContato, setNovoContato] = useState({ nome: "", telefone: "" });
 
-  const handleChange = (key: keyof typeof perfil, value: string) => {
-    setPerfil((prev) => ({ ...prev, [key]: value }));
+  const handleChange = (key: keyof typeof usuario, value: string) => {
+    // @ts-ignore
+    setUsuario((prev) => ({ ...prev, [key]: value }));
   };
 
   const toggleEdit = () => {
     if (editando) {
-      console.log("Salvando perfil:", perfil, "Contatos:", contatos);
+      console.log("Salvando perfil:", usuario, "Contatos:", contatos);
     }
     setEditando(!editando);
   };
@@ -97,7 +115,7 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
         <View style={styles.conteudoHeader}>
-          <Text style={styles.nomePaciente}>Nome do Paciente</Text>
+          <Text style={styles.nomePaciente}>{usuario.nome}</Text>
         </View>
         <View style={styles.conteudoHeader}>
           <TouchableOpacity style={styles.botaoEditar} onPress={toggleEdit}>
@@ -121,11 +139,11 @@ export default function ProfileScreen() {
           {editando ? (
             <TextInput
               style={styles.input}
-              value={perfil.email}
+              value={usuario.email}
               onChangeText={(t) => handleChange("email", t)}
             />
           ) : (
-            <Text style={styles.value}>{perfil.email}</Text>
+            <Text style={styles.value}>{usuario.email}</Text>
           )}
         </View>
 
@@ -134,11 +152,11 @@ export default function ProfileScreen() {
           {editando ? (
             <TextInput
               style={styles.input}
-              value={perfil.telefone}
+              value={usuario.telefone}
               onChangeText={(t) => handleChange("telefone", t)}
             />
           ) : (
-            <Text style={styles.value}>{perfil.telefone}</Text>
+            <Text style={styles.value}>{usuario.telefone}</Text>
           )}
         </View>
 
@@ -147,11 +165,11 @@ export default function ProfileScreen() {
           {editando ? (
             <TextInput
               style={styles.input}
-              value={perfil.endereco}
+              value={usuario.endereco}
               onChangeText={(t) => handleChange("endereco", t)}
             />
           ) : (
-            <Text style={styles.value}>{perfil.endereco}</Text>
+            <Text style={styles.value}>{usuario.endereco}</Text>
           )}
         </View>
 
@@ -160,11 +178,11 @@ export default function ProfileScreen() {
           {editando ? (
             <TextInput
               style={styles.input}
-              value={perfil.cpf}
+              value={usuario.cpf}
               onChangeText={(t) => handleChange("cpf", t)}
             />
           ) : (
-            <Text style={styles.value}>{perfil.cpf}</Text>
+            <Text style={styles.value}>{usuario.cpf}</Text>
           )}
         </View>
 

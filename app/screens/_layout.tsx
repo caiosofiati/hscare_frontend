@@ -7,6 +7,7 @@ import {
 import { CommonActions } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Drawer } from "expo-router/drawer";
+import { useEffect, useState } from "react";
 import {
   Image,
   StyleSheet,
@@ -15,8 +16,27 @@ import {
   View,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { buscarDados } from "../hooks/buscarDadosDoUsuarioEmCache";
 
 function CustomDrawerContent(props: DrawerContentComponentProps) {
+
+  const [usuario, setUsuario] = useState<{ nome: string } | null>({ nome: 'Nome do Paciente' });
+
+  useEffect(() => {
+    const carregarUsuario = async () => {
+      try {
+        const dados = await buscarDados("usuario");
+        if (dados) {
+          setUsuario(JSON.parse(dados));
+        }
+      } catch (e) {
+        console.error("Erro ao carregar usuário:", e);
+      }
+    };
+
+    carregarUsuario();
+  }, []);
+  
   return (
     <DrawerContentScrollView
       {...props}
@@ -37,7 +57,8 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
             source={require("../../assets/images/hscare.png")}
             style={styles.imagemPerfil}
           />
-          <Text style={styles.nomePerfil}>Nome do Paciente</Text>
+          //@ts-ignore
+          <Text style={styles.nomePerfil}>{usuario.nome}</Text>
         </TouchableOpacity>
       </LinearGradient>
 
