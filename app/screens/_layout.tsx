@@ -57,8 +57,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
             source={require("../../assets/images/hscare.png")}
             style={styles.imagemPerfil}
           />
-          //@ts-ignore
-          <Text style={styles.nomePerfil}>{usuario.nome}</Text>
+          <Text style={styles.nomePerfil}>{usuario?.nome}</Text>
         </TouchableOpacity>
       </LinearGradient>
 
