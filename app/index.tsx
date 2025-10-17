@@ -11,7 +11,7 @@ import {
   View,
 } from "react-native";
 import { salvarDados } from "./hooks/CacheHook";
-import { login } from "./hooks/LoginHook";
+import { login } from "./hooks/loginHook";
 
 export default function LoginScreen() {
   const router = useRouter();

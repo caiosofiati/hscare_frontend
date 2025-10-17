@@ -11,7 +11,7 @@ import {
   View,
 } from "react-native";
 import { salvarDados } from "../hooks/CacheHook";
-import { registrar } from "../hooks/LoginHook";
+import { registrar } from "../hooks/loginHook";
 
 export default function RegistroScreen() {
   const router = useRouter();
