@@ -27,6 +27,8 @@ export async function retornarDadosUsuario(email: string, token: string) {
 
 export async function atualizarDadosUsuario(usuario: object, fotoPerfil: string) {
   try {
+      //@ts-ignore
+      console.info(`Atualizando dados do usuário: ${usuario.nome}`);
 
       const body = {
           ...usuario,
@@ -35,14 +37,13 @@ export async function atualizarDadosUsuario(usuario: object, fotoPerfil: string)
 
       const response = await api.post(`${path}/atualizar`, body);
 
-    console.log("Retorno do atualizar usuario: ", response.data)
-
     return response.data;
 } catch (error: any) {
       console.error("Erro ao atualizar usuário:", error);
+
       Alert.alert(
-        "Erro",
-        error.response?.data?.message || "Falha ao conectar ao servidor."
+        "Erro ao atualizar dados",
+        error.response?.data?.message || "Não foi possível atualizar seus dados, tente novamente."
       );
   }
 };

@@ -12,7 +12,7 @@
       try {
           await AsyncStorage.setItem(key, value);
         } catch (error) {
-      console.error("Erro no profile:", error);
+      console.error("Erro ao salvar dados do cache:", error);
       throw error;
       }
     };
