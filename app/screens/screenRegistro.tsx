@@ -10,6 +10,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { salvarDados } from "../hooks/CacheHook";
+import { registrar } from "../hooks/LoginHook";
 
 export default function RegistroScreen() {
   const router = useRouter();
@@ -35,6 +37,18 @@ export default function RegistroScreen() {
       }),
     ]).start();
   }, []);
+
+  async function handleCadastro() {
+      try {
+        const data = await registrar(nome, email, senha, cpf);
+        router.push("../screens/screenHome");
+  
+        salvarDados("usuario", JSON.stringify(data.usuario));
+        salvarDados("token", String(data.token));
+      } catch (err) {
+        console.log(err);
+      }
+    }
 
   return (
     <LinearGradient
@@ -103,7 +117,7 @@ export default function RegistroScreen() {
 
         <TouchableOpacity
           style={{ width: "100%", marginTop: 10, marginBottom: 20 }}
-          onPress={() => router.push("../screens/screenHome")}
+          onPress={handleCadastro}
         >
           <LinearGradient
             colors={["#3BB2E4", "#3BB2E4"]}

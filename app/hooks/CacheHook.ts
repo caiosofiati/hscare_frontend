@@ -7,3 +7,12 @@
         console.error("Erro ao buscar dados do cache: ", e);
       }
     };
+
+    export const salvarDados = async (key: string, value: string) => {
+      try {
+          await AsyncStorage.setItem(key, value);
+        } catch (error) {
+      console.error("Erro no profile:", error);
+      throw error;
+      }
+    };

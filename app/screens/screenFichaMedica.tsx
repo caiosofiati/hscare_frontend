@@ -17,7 +17,7 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import { buscarDados } from '../hooks/buscarDadosDoUsuarioEmCache';
+import { buscarDados } from '../hooks/CacheHook';
 
 export default function Ficha_MedicaScreen() {
   const navigation = useNavigation();
@@ -84,7 +84,7 @@ export default function Ficha_MedicaScreen() {
           <h1>Ficha Médica</h1>
           
           <h2>Informações Pessoais</h2>
-          <p><strong>Nome:</strong> ${usuario.nome}</p>
+          <p><strong>Nome:</strong> ${usuario?.nome}</p>
           <p><strong>Data de nascimento:</strong> ${birthDate.toLocaleDateString("pt-BR")}</p>
           <p><strong>Idade:</strong> ${age} anos</p>
           <p><strong>Gênero:</strong> ${gender}</p>
@@ -146,7 +146,7 @@ export default function Ficha_MedicaScreen() {
           <Text style={styles.sectionTitle}>Informações pessoais</Text>
 
           <Text style={styles.label}>Nome completo</Text>
-          <Text style={styles.inputMaior}>{usuario.nome}</Text>
+          <Text style={styles.inputMaior}>{usuario?.nome}</Text>
 
           <View style={styles.row}>
             <View style={styles.half}>

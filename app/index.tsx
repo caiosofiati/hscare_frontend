@@ -10,8 +10,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { login } from "./hooks/loginHook";
-import { salvarDados } from "./hooks/salvarDadosDoUsuarioEmCache";
+import { salvarDados } from "./hooks/CacheHook";
+import { login } from "./hooks/LoginHook";
 
 export default function LoginScreen() {
   const router = useRouter();

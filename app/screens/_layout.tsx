@@ -16,7 +16,7 @@ import {
   View,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { buscarDados } from "../hooks/buscarDadosDoUsuarioEmCache";
+import { buscarDados } from "../hooks/CacheHook";
 
 function CustomDrawerContent(props: DrawerContentComponentProps) {
 
@@ -134,7 +134,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 
       <View style={styles.drawerItemsContainer}>
         <DrawerItem
-          label="Chat BOT"
+          label="Assistente Virtual"
           icon={({ color, size }) => (
             <Ionicons name="chatbubbles-outline" size={size} color={color} />
           )}

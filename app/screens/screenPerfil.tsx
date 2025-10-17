@@ -11,74 +11,90 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
-import { buscarDados } from "../hooks/buscarDadosDoUsuarioEmCache";
+import { buscarDados } from "../hooks/CacheHook";
+import { atualizarDadosUsuario } from "../hooks/UsuarioHook";
 
 export default function ProfileScreen() {
   const navigation = useNavigation();
-
   const [editando, setEditando] = useState(false);
   const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
 
-  const [usuario, setUsuario] = useState<{ nome: string, email: string, telefone: string, endereco: string, cpf: string } | null>({
+  const [usuario, setUsuario] = useState<{
+    _id: string;
+    nome: string;
+    email: string;
+    telefone: string;
+    endereco: string;
+    cpf: string;
+    contatos: { nome: string; telefone: string }[];
+  }>({
+    _id: "1",
     nome: "Nome do Paciente",
     email: "email@email.com",
     telefone: "(19) 99999-9999",
     endereco: "Rua Exemplo, 123 - São Paulo, SP",
     cpf: "123.456.789-00",
+    contatos: [
+      { nome: "Mãe", telefone: "(11) 91234-5678" },
+      { nome: "João (Irmão)", telefone: "(19) 98765-4321" },
+    ],
   });
+
+  const [novoContato, setNovoContato] = useState({ nome: "", telefone: "" });
 
   useEffect(() => {
     const carregarUsuario = async () => {
       try {
         const dados = await buscarDados("usuario");
-        if (dados) {
-          setUsuario(JSON.parse(dados));
-        }
+        if (dados) setUsuario(JSON.parse(dados));
       } catch (e) {
         console.error("Erro ao carregar usuário:", e);
       }
     };
-
     carregarUsuario();
   }, []);
 
-  const [contatos, setContatos] = useState<
-    { nome: string; telefone: string }[]
-  >([
-    { nome: "Mãe", telefone: "(11) 91234-5678" },
-    { nome: "João(Irmão)", telefone: "(19) 98765-4321" },
-  ]);
-
-  const [novoContato, setNovoContato] = useState({ nome: "", telefone: "" });
-
   const handleChange = (key: keyof typeof usuario, value: string) => {
-    // @ts-ignore
     setUsuario((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleAtualizarUsuario = async () => {
+    try {
+      //@ts-ignore
+      await atualizarDadosUsuario(usuario, fotoPerfil);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   const toggleEdit = () => {
     if (editando) {
-      console.log("Salvando perfil:", usuario, "Contatos:", contatos);
+      handleAtualizarUsuario();
     }
     setEditando(!editando);
   };
 
   const adicionarContato = () => {
     if (novoContato.nome && novoContato.telefone) {
-      setContatos([...contatos, novoContato]);
+      setUsuario((prev) => ({
+        ...prev,
+        contatos: [...prev.contatos, novoContato],
+      }));
       setNovoContato({ nome: "", telefone: "" });
     }
   };
 
   const removerContato = (index: number) => {
-    setContatos(contatos.filter((_, i) => i !== index));
+    setUsuario((prev) => ({
+      ...prev,
+      contatos: prev.contatos.filter((_, i) => i !== index),
+    }));
   };
 
   const escolherFoto = async () => {
     if (!editando) return;
-
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -115,8 +131,9 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
         <View style={styles.conteudoHeader}>
-          <Text style={styles.nomePaciente}>{usuario.nome}</Text>
+          <Text style={styles.nomePaciente}>{usuario?.nome}</Text>
         </View>
+
         <View style={styles.conteudoHeader}>
           <TouchableOpacity style={styles.botaoEditar} onPress={toggleEdit}>
             <Ionicons
@@ -134,57 +151,25 @@ export default function ProfileScreen() {
       <View style={styles.infoContainer}>
         <Text style={styles.infoTitle}>Informações Pessoais</Text>
 
-        <View style={styles.infoBox}>
-          <Text style={styles.label}>Email</Text>
-          {editando ? (
-            <TextInput
-              style={styles.input}
-              value={usuario.email}
-              onChangeText={(t) => handleChange("email", t)}
-            />
-          ) : (
-            <Text style={styles.value}>{usuario.email}</Text>
-          )}
-        </View>
-
-        <View style={styles.infoBox}>
-          <Text style={styles.label}>Telefone</Text>
-          {editando ? (
-            <TextInput
-              style={styles.input}
-              value={usuario.telefone}
-              onChangeText={(t) => handleChange("telefone", t)}
-            />
-          ) : (
-            <Text style={styles.value}>{usuario.telefone}</Text>
-          )}
-        </View>
-
-        <View style={styles.infoBox}>
-          <Text style={styles.label}>Endereço</Text>
-          {editando ? (
-            <TextInput
-              style={styles.input}
-              value={usuario.endereco}
-              onChangeText={(t) => handleChange("endereco", t)}
-            />
-          ) : (
-            <Text style={styles.value}>{usuario.endereco}</Text>
-          )}
-        </View>
-
-        <View style={styles.infoBox}>
-          <Text style={styles.label}>CPF</Text>
-          {editando ? (
-            <TextInput
-              style={styles.input}
-              value={usuario.cpf}
-              onChangeText={(t) => handleChange("cpf", t)}
-            />
-          ) : (
-            <Text style={styles.value}>{usuario.cpf}</Text>
-          )}
-        </View>
+        {["email", "telefone", "endereco", "cpf"].map((campo) => (
+          <View key={campo} style={styles.infoBox}>
+            <Text style={styles.label}>
+              {campo === "cpf" ? campo.toUpperCase() : campo.charAt(0).toUpperCase() + campo.slice(1)}
+            </Text>
+            {editando ? (
+              <TextInput
+                style={styles.input}
+                // @ts-ignore
+                value={usuario?.[campo as keyof typeof usuario] ?? ""}
+                onChangeText={(t) => handleChange(campo as keyof typeof usuario, t)}
+              />
+            ) : (
+              <Text style={styles.value}>
+                { usuario?.[campo as keyof typeof usuario] }
+              </Text>
+            )}
+          </View>
+        ))}
 
         <View style={styles.infoBox}>
           <Text style={styles.infoTitle}>Contatos</Text>
@@ -220,7 +205,7 @@ export default function ProfileScreen() {
           )}
 
           <FlatList
-            data={contatos}
+            data={usuario.contatos}
             keyExtractor={(_, index) => index.toString()}
             renderItem={({ item, index }) => (
               <View style={styles.contatoItem}>
@@ -364,19 +349,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 8,
   },
-  botaoAdicionar: {
-    marginLeft: 8,
-  },
-  botaoGradiente: {
-    borderRadius: 20,
-    padding: 4,
-  },
+  botaoAdicionar: { marginLeft: 8 },
+  botaoGradiente: { borderRadius: 20, padding: 4 },
   novoContatoContainer: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 10,
   },
-  botaoRemover: {
-    marginLeft: "auto",
-  },
+  botaoRemover: { marginLeft: "auto" },
 });

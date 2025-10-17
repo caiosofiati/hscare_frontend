@@ -23,3 +23,24 @@ export async function login(email: string, password: string) {
     throw error;
   }
 }
+
+export async function registrar(nome: string, email: string, senha: string, cpf: string) {
+  try {
+
+      const body = {
+          nome,
+          email,
+          senha,
+          cpf
+      }
+
+      const response = await api.post(`${path}/registrar`, body);
+
+      console.log("Retorno do cadastro:", response.data);
+      
+      return response.data;
+    } catch (error: any) {
+    console.error("Erro no registro:", error);
+    throw error;
+  }
+}

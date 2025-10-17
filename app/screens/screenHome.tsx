@@ -3,7 +3,7 @@ import { DrawerActions, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { buscarDados } from "../hooks/buscarDadosDoUsuarioEmCache";
+import { buscarDados } from "../hooks/CacheHook";
 
 export default function HomeScreen() {
   const navigation = useNavigation();
@@ -48,7 +48,7 @@ export default function HomeScreen() {
       </LinearGradient>
 
       <View style={styles.conteudo}>
-        <Text>Bem-vindo ao HSCare, {usuario.nome || 'Nome do Paciente'} ! 👋</Text>
+        <Text>Bem-vindo ao HSCare, {usuario?.nome || 'Nome do Paciente'} ! 👋</Text>
       </View>
 
     </View>
