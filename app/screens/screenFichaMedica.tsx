@@ -18,6 +18,7 @@ import {
   View
 } from "react-native";
 import { buscarDados } from '../hooks/CacheHook';
+import { atualizarDadosFichaMedica, buscarFicaMedica } from '../hooks/FichaMedicaHook';
 
 export default function Ficha_MedicaScreen() {
   const navigation = useNavigation();
@@ -36,51 +37,103 @@ export default function Ficha_MedicaScreen() {
   const [age, setAge] = useState("23");
   const [gender, setGender] = useState("Masculino");
   const [bloodType, setBloodType] = useState("O+");
-  const [height, setHeight] = useState("185"); 
-  const [weight, setWeight] = useState("70");  
+  const [height, setHeight] = useState("185");
+  const [weight, setWeight] = useState("70");
 
-  const [usuario, setUsuario] = useState<
-  { _id: string,  
-    nome: string, 
-    email: string, 
-    telefone: string, 
-    endereco: string, 
-    cpf: string 
+  const [usuario, setUsuario] = useState<{
+    _id: string;
+    nome: string;
+    email: string;
+    telefone: string;
+    endereco: string;
+    cpf: string;
+  } | null>(null);
 
-  } | null>({
-    _id: "123",
-    nome: "Nome do Paciente",
-    email: "email@email.com",
-    telefone: "(19) 99999-9999",
-    endereco: "Rua Exemplo, 123 - São Paulo, SP",
-    cpf: "123.456.789-00",
-  });
-    
-      useEffect(() => {
-        const carregarUsuario = async () => {
-          try {
-            const dados = await buscarDados("usuario");
-            if (dados) {
-              setUsuario(JSON.parse(dados));
-            }
-          } catch (e) {
-            console.error("Erro ao carregar usuário:", e);
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    const carregarUsuario = async () => {
+      try {
+        const dados = await buscarDados("usuario");
+        const tk = await buscarDados("token");
+        if (dados) {
+          setUsuario(JSON.parse(dados));
+        }
+        if (tk) setToken(tk);
+
+      } catch (e) {
+        console.error("Erro ao carregar usuário:", e);
+      }
+    };
+
+    carregarUsuario();
+  }, []);
+
+  useEffect(() => {
+    const carregarFichaMedica = async () => {
+      if (usuario?._id && token) {
+        try {
+          const ficha = await buscarFicaMedica(usuario._id, token);
+          if (ficha) {
+            setGender(ficha.genero || "Masculino");
+            setBloodType(ficha.tipoSanguineo || "O+");
+            setHeight(ficha.altura?.toString() || "175");
+            setWeight(ficha.peso?.toString() || "70");
+            setIsDonor(ficha.doadorOrgaos || false);
+            setMedicalConditions(ficha.doencaCronica || []);
+            setAllergies(ficha.alergias || []);
+            setMedications(ficha.medicamentos || []);
+            if (ficha.dataNascimento) setBirthDate(new Date(ficha.dataNascimento));
           }
-        };
-    
-        carregarUsuario();
-      }, []);
+        } catch (error) {
+          console.error("Erro ao buscar ficha médica:", error);
+        }
+      }
+    };
 
+    carregarFichaMedica();
+  }, [usuario, token]);
 
-      useEffect(() => {
-      setAge(calcularIdade(birthDate).toString());
-      }, [birthDate]);
-
+  useEffect(() => {
+    setAge(calcularIdade(birthDate).toString());
+  }, [birthDate]);
 
   const addToList = (item: string, list: string[], setter: React.Dispatch<React.SetStateAction<string[]>>) => {
     if (item.trim() !== "") {
       setter([...list, item.trim()]);
     }
+  };
+
+  const handleAtualizarUsuario = async () => {
+    try {
+      const fichaMedica = {
+        userId:usuario?._id,
+        nome: usuario?.nome,
+        genero: gender,
+        tipoSanguineo: bloodType,
+        altura: height,
+        peso: weight,
+        doadorOrgaos: isDonor,
+        doencaCronica: medicalConditions,
+        alergias: allergies,
+        medicamentos: medications,
+        dataNascimento: birthDate,
+      };
+
+      if (usuario && token) {
+        await atualizarDadosFichaMedica(usuario._id, fichaMedica, token);
+      }
+    } catch (err) {
+      console.log("Erro ao salvar ficha médica:", err);
+    }
+  };
+
+  const calcularIdade = (dataNascimento: Date) => {
+    const hoje = new Date();
+    let idade = hoje.getFullYear() - dataNascimento.getFullYear();
+    const m = hoje.getMonth() - dataNascimento.getMonth();
+    if (m < 0 || (m === 0 && hoje.getDate() < dataNascimento.getDate())) idade--;
+    return idade;
   };
 
   const generatePDF = async () => {
@@ -96,7 +149,6 @@ export default function Ficha_MedicaScreen() {
         </head>
         <body>
           <h1>Ficha Médica</h1>
-          
           <h2>Informações Pessoais</h2>
           <p><strong>Nome:</strong> ${usuario?.nome}</p>
           <p><strong>Data de nascimento:</strong> ${birthDate.toLocaleDateString("pt-BR")}</p>
@@ -108,19 +160,11 @@ export default function Ficha_MedicaScreen() {
           <p><strong>Doador de órgãos:</strong> ${isDonor ? "Sim" : "Não"}</p>
 
           <h2>Condições Médicas</h2>
-          <ul>
-            ${medicalConditions.map(cond => `<li>${cond}</li>`).join("")}
-          </ul>
-
+          <ul>${medicalConditions.map(cond => `<li>${cond}</li>`).join("")}</ul>
           <h2>Alergias</h2>
-          <ul>
-            ${allergies.map(all => `<li>${all}</li>`).join("")}
-          </ul>
-
+          <ul>${allergies.map(all => `<li>${all}</li>`).join("")}</ul>
           <h2>Medicamentos</h2>
-          <ul>
-            ${medications.map(med => `<li>${med}</li>`).join("")}
-          </ul>
+          <ul>${medications.map(med => `<li>${med}</li>`).join("")}</ul>
         </body>
       </html>
     `;
@@ -128,23 +172,9 @@ export default function Ficha_MedicaScreen() {
     const { uri } = await Print.printToFileAsync({ html: htmlContent });
     const newFileName = 'fichamedicaHsCare.pdf';
     const newPath = `${FileSystem.documentDirectory}${newFileName}`;
-
     await FileSystem.moveAsync({ from: uri, to: newPath });
     await Sharing.shareAsync(newPath);
   };
-
-  const calcularIdade = (dataNascimento: Date) => {
-  const hoje = new Date();
-  let idade = hoje.getFullYear() - dataNascimento.getFullYear();
-  const m = hoje.getMonth() - dataNascimento.getMonth();
-
-  if (m < 0 || (m === 0 && hoje.getDate() < dataNascimento.getDate())) {
-    idade--;
-  }
-
-  return idade;
-  };
-
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -167,10 +197,19 @@ export default function Ficha_MedicaScreen() {
             style={styles.logo}
             resizeMode="contain"
           />
+
+          <View style={styles.conteudoHeader}>
+            <TouchableOpacity style={styles.botaoEditar} onPress={handleAtualizarUsuario}>
+              <Ionicons name="save-outline" size={20} color="#fff" />
+              <Text style={styles.textoEditar}>Salvar</Text>
+            </TouchableOpacity>
+          </View>
         </LinearGradient>
 
         <View style={styles.conteudo}>
           <Text style={styles.sectionTitle}>Informações pessoais</Text>
+
+          
 
           <Text style={styles.label}>Nome completo</Text>
           <Text style={styles.inputMaior}>{usuario?.nome}</Text>
@@ -307,5 +346,8 @@ const styles = StyleSheet.create({
   donorLabel: { fontSize: 16, fontWeight: "500" },
   donorStatus: { alignSelf: "center", fontSize: 14, color: "#555", marginBottom: 20, marginTop: -5 },
   menuButton: { marginRight: -15 },
-  logo: { flex: 1, height: 60, tintColor: "#fff" }
+  logo: { flex: 1, height: 60, tintColor: "#fff" },
+  conteudoHeader: {flexDirection: "row", alignItems: "center", marginTop: 5,},
+  botaoEditar: {flexDirection: "row",backgroundColor: "rgba(255,255,255,0.2)",paddingHorizontal: 10,paddingVertical: 5,borderRadius: 20,alignItems: "center",},
+  textoEditar: {color: "#fff",marginLeft: 4,fontSize: 14,fontWeight: "600",},
 });
