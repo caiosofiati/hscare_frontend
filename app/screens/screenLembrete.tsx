@@ -3,7 +3,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { DrawerActions, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Notifications from "expo-notifications";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FlatList,
   Image,
@@ -14,18 +14,24 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
+import { buscarLembretes, criarLembrete, deletarLembrete } from "../hooks/LembreteHook";
 
 export default function ReminderScreen() {
   const navigation = useNavigation();
 
   type Lembrete = {
-    id: number;
+    [x: string]: any;
+    _id?: string;
+    id?: number | string;
     titulo: string;
     data: Date;
     dias: string[];
   };
 
+  const [carregando, setCarregando] = useState(true);
   const [lembretes, setLembretes] = useState<Lembrete[]>([]);
   const [mostrarModal, setMostrarModal] = useState(false);
   const [dataSelecionada, setDataSelecionada] = useState(new Date());
@@ -33,8 +39,32 @@ export default function ReminderScreen() {
   const [mostrarTimePicker, setMostrarTimePicker] = useState(false);
   const [titulo, setTitulo] = useState("");
   const [diasSelecionados, setDiasSelecionados] = useState<string[]>([]);
+  const [deletandoId, setDeletandoId] = useState<string | number | null>(null);
 
   const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+  useEffect(() => {
+    const carregarLembretes = async () => {
+      try {
+        setCarregando(true);
+        const data = await buscarLembretes();
+
+        const lembretesConvertidos = (data || []).map((l: any) => ({
+          ...l,
+          data: new Date(l.data),
+        }));
+
+        setLembretes(lembretesConvertidos);
+      } catch (error) {
+        console.error("Erro ao buscar lembretes:", error);
+        Alert.alert("Erro", "Não foi possível carregar seus lembretes.");
+      } finally {
+        setCarregando(false);
+      }
+    };
+
+    carregarLembretes();
+  }, []);
 
   const alternarDia = (dia: string) => {
     setDiasSelecionados((prev) =>
@@ -43,37 +73,74 @@ export default function ReminderScreen() {
   };
 
   const adicionarLembrete = async () => {
-    const novoLembrete: Lembrete = {
-      id: Date.now(),
-      titulo: titulo || "Sem título",
-      data: dataSelecionada,
-      dias: diasSelecionados,
-    };
+    try {
+      const novoLembrete: Lembrete = {
+        id: Date.now(),
+        titulo: titulo || "Sem título",
+        data: dataSelecionada,
+        dias: diasSelecionados,
+      };
 
-    setLembretes((prev) => [...prev, novoLembrete]);
+      // chama backend (assume que criarLembrete retorna o objeto criado com _id)
+      const criado = await criarLembrete({
+        titulo: novoLembrete.titulo,
+        data: novoLembrete.data.toISOString(),
+        dias: novoLembrete.dias,
+      });
 
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: novoLembrete.titulo,
-        body: `⏰ ${formatarData(novoLembrete.data)}`,
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-        seconds: 60,
-      },
-    });
+      // se API retornar o objeto criado (com _id), use ele; senão use o local
+      const itemParaAdicionar = criado
+        ? { ...criado, data: new Date(criado.data) }
+        : novoLembrete;
 
-    setTitulo("");
-    setDiasSelecionados([]);
-    setMostrarModal(false);
+      setLembretes((prev) => [...prev, itemParaAdicionar]);
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: novoLembrete.titulo,
+          body: `⏰ ${formatarData(novoLembrete.data)}`,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: 60,
+        },
+      });
+
+      setTitulo("");
+      setDiasSelecionados([]);
+      setMostrarModal(false);
+    } catch (error) {
+      console.error("Erro ao salvar lembrete:", error);
+      Alert.alert("Erro", "Não foi possível criar o lembrete.");
+    }
   };
 
-  const excluirLembrete = (id: number) => {
-    setLembretes((prev) => prev.filter((l) => l.id !== id));
+  const handleExcluirLembrete = async (item: Lembrete) => {
+    const idParaDeletar = item._id ?? item.id;
+    
+    if (!idParaDeletar) {
+      setLembretes((prev) => prev.filter((l) => (l._id ?? l.id) !== idParaDeletar));
+      return;
+    }
+
+    try {
+
+      setDeletandoId(idParaDeletar);
+
+      await deletarLembrete(String(idParaDeletar));
+
+      setLembretes((prev) => prev.filter((l) => (l._id ?? l.id) !== idParaDeletar));
+    } catch (error) {
+      console.error("Erro ao excluir lembrete:", error);
+      Alert.alert("Erro", "Não foi possível excluir o lembrete.");
+    } finally {
+      setDeletandoId(null);
+    }
   };
 
   const formatarData = (data: Date) => {
-    return `${data.toLocaleDateString()} às ${data.toLocaleTimeString([], {
+    const d = data instanceof Date ? data : new Date(data);
+    return `${d.toLocaleDateString()} às ${d.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
     })}`;
@@ -101,39 +168,47 @@ export default function ReminderScreen() {
         />
       </LinearGradient>
 
-      <FlatList
-        data={lembretes}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={{ padding: 20 }}
-        renderItem={({ item }) => (
-          <View style={styles.lembreteItem}>
-            <Ionicons
-              name="alarm-outline"
-              size={22}
-              color="#3BB2E4"
-              style={{ marginRight: 10 }}
-            />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.titulo}>{item.titulo}</Text>
-              <Text style={styles.lembreteTexto}>{formatarData(item.data)}</Text>
-              {item.dias.length > 0 && (
-                <Text style={styles.dias}>
-                  Repetir: {item.dias.join(", ")}
-                </Text>
-              )}
-            </View>
-            <TouchableOpacity
-              style={styles.excluirBotao}
-              onPress={() => excluirLembrete(item.id)}
-            >
-              <Ionicons name="remove-circle" size={24} color="#E53935" />
-            </TouchableOpacity>
-          </View>
-        )}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>Nenhum lembrete criado ainda.</Text>
-        }
-      />
+      {carregando ? (
+        <ActivityIndicator style={{ marginTop: 40 }} color="#3BB2E4" size="large" />
+      ) : (
+        <FlatList
+          data={lembretes}
+          keyExtractor={(item) => ((item._id ?? item.id) ?? Date.now()).toString()}
+          contentContainerStyle={{ padding: 20 }}
+          renderItem={({ item }) => {
+            const itemId = item._id ?? item.id;
+            const isDeleting = deletandoId !== null && String(deletandoId) === String(itemId);
+
+            return (
+              <View style={styles.lembreteItem}>
+                <Ionicons
+                  name="alarm-outline"
+                  size={22}
+                  color="#3BB2E4"
+                  style={{ marginRight: 10 }}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.titulo}>{item.titulo}</Text>
+                  <Text style={styles.lembreteTexto}>{formatarData(item.data)}</Text>
+                  {item.dias?.length > 0 && <Text style={styles.dias}>Repetir: {item.dias.join(", ")}</Text>}
+                </View>
+                <TouchableOpacity
+                  style={styles.excluirBotao}
+                  onPress={() => handleExcluirLembrete(item)}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <ActivityIndicator size="small" color="#E53935" />
+                  ) : (
+                    <Ionicons name="remove-circle" size={24} color="#E53935" />
+                  )}
+                </TouchableOpacity>
+              </View>
+            );
+          }}
+          ListEmptyComponent={<Text style={styles.emptyText}>Nenhum lembrete criado ainda.</Text>}
+        />
+      )}
 
       <TouchableOpacity
         style={styles.botaoAdicionar}
@@ -194,11 +269,7 @@ export default function ReminderScreen() {
                   ]}
                   onPress={() => alternarDia(dia)}
                 >
-                  <Text
-                    style={{
-                      color: diasSelecionados.includes(dia) ? "#fff" : "#333",
-                    }}
-                  >
+                  <Text style={{ color: diasSelecionados.includes(dia) ? "#fff" : "#333" }}>
                     {dia}
                   </Text>
                 </TouchableOpacity>
@@ -214,11 +285,7 @@ export default function ReminderScreen() {
                   setMostrarDatePicker(false);
                   if (selected) {
                     const novaData = new Date(dataSelecionada);
-                    novaData.setFullYear(
-                      selected.getFullYear(),
-                      selected.getMonth(),
-                      selected.getDate()
-                    );
+                    novaData.setFullYear(selected.getFullYear(), selected.getMonth(), selected.getDate());
                     setDataSelecionada(novaData);
                   }
                 }}
@@ -243,13 +310,8 @@ export default function ReminderScreen() {
             )}
 
             <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={styles.cancelar}
-                onPress={() => setMostrarModal(false)}
-              >
-                <Text style={{ color: "#E53935", fontWeight: "600" }}>
-                  Cancelar
-                </Text>
+              <TouchableOpacity style={styles.cancelar} onPress={() => setMostrarModal(false)}>
+                <Text style={{ color: "#E53935", fontWeight: "600" }}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.salvar} onPress={adicionarLembrete}>
                 <LinearGradient
@@ -258,9 +320,7 @@ export default function ReminderScreen() {
                   end={{ x: 1, y: 1 }}
                   style={styles.botaoGradienteFooter}
                 >
-                  <Text style={{ color: "#fff", fontWeight: "700" }}>
-                    Salvar
-                  </Text>
+                  <Text style={{ color: "#fff", fontWeight: "700" }}>Salvar</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>
@@ -300,7 +360,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#888",
   },
-  excluirBotao: { marginLeft: 10 },
+  excluirBotao: { marginLeft: 10, padding: 6 },
   botaoAdicionar: {
     position: "absolute",
     bottom: 25,
