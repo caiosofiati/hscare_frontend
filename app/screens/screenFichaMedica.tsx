@@ -39,7 +39,15 @@ export default function Ficha_MedicaScreen() {
   const [height, setHeight] = useState("185"); 
   const [weight, setWeight] = useState("70");  
 
-  const [usuario, setUsuario] = useState<{ _id: string,  nome: string, email: string, telefone: string, endereco: string, cpf: string } | null>({
+  const [usuario, setUsuario] = useState<
+  { _id: string,  
+    nome: string, 
+    email: string, 
+    telefone: string, 
+    endereco: string, 
+    cpf: string 
+
+  } | null>({
     _id: "123",
     nome: "Nome do Paciente",
     email: "email@email.com",
@@ -62,6 +70,12 @@ export default function Ficha_MedicaScreen() {
     
         carregarUsuario();
       }, []);
+
+
+      useEffect(() => {
+      setAge(calcularIdade(birthDate).toString());
+      }, [birthDate]);
+
 
   const addToList = (item: string, list: string[], setter: React.Dispatch<React.SetStateAction<string[]>>) => {
     if (item.trim() !== "") {
@@ -119,6 +133,19 @@ export default function Ficha_MedicaScreen() {
     await Sharing.shareAsync(newPath);
   };
 
+  const calcularIdade = (dataNascimento: Date) => {
+  const hoje = new Date();
+  let idade = hoje.getFullYear() - dataNascimento.getFullYear();
+  const m = hoje.getMonth() - dataNascimento.getMonth();
+
+  if (m < 0 || (m === 0 && hoje.getDate() < dataNascimento.getDate())) {
+    idade--;
+  }
+
+  return idade;
+  };
+
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
       <View style={styles.container}>
@@ -161,7 +188,7 @@ export default function Ficha_MedicaScreen() {
             </View>
             <View style={styles.half}>
               <Text style={styles.label}>Idade</Text>
-              <TextInput value={age} onChangeText={setAge} style={styles.input} keyboardType="numeric" />
+              <TextInput value={age} onChangeText={setAge} style={styles.input} keyboardType="numeric" readOnly = {true} />
             </View>
           </View>
           {showDatePicker && (
