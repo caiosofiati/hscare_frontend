@@ -31,7 +31,6 @@ export default function Ficha_MedicaScreen() {
   const [medications, setMedications] = useState<string[]>([]);
   const [isDonor, setIsDonor] = useState(false);
 
-  const [fullName, setFullName] = useState("Usuário HSCare");
   const [birthDate, setBirthDate] = useState(new Date("1997-04-18"));
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [age, setAge] = useState("23");
@@ -208,9 +207,6 @@ export default function Ficha_MedicaScreen() {
 
         <View style={styles.conteudo}>
           <Text style={styles.sectionTitle}>Informações pessoais</Text>
-
-          
-
           <Text style={styles.label}>Nome completo</Text>
           <Text style={styles.inputMaior}>{usuario?.nome}</Text>
 

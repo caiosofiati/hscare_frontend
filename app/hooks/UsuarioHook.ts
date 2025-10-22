@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Alert } from "react-native";
+import { buscarDados } from "./CacheHook";
 
 const api = axios.create({
   baseURL: "http://10.0.2.2:3000",
@@ -30,12 +31,18 @@ export async function atualizarDadosUsuario(usuario: object, fotoPerfil: string)
       //@ts-ignore
       console.info(`Atualizando dados do usuário: ${usuario.nome}`);
 
+      const token = await buscarDados("token");
+
+      const headers = {
+          'authorization': `Bearer ${token}`,
+      };
+
       const body = {
           ...usuario,
           fotoPerfil,
       } 
 
-      const response = await api.post(`${path}/atualizar`, body);
+      const response = await api.post(`${path}/atualizar`, body, {headers});
 
     return response.data;
 } catch (error: any) {

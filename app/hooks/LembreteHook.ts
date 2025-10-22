@@ -11,6 +11,11 @@ const pathLembrete = "/lembretes";
 
 export async function criarLembrete(dadosLembrete: DadosLembrete) {
   try {
+      const token = await buscarDados("token");
+
+      const headers = {
+          'authorization': `Bearer ${token}`,
+      };
 
     const usuario = await buscarDados("usuario");
     const usuarioObj = usuario ? JSON.parse(usuario) : null;
@@ -22,7 +27,7 @@ export async function criarLembrete(dadosLembrete: DadosLembrete) {
       titulo: dadosLembrete.titulo,
     };
 
-    const response = await api.post(pathLembrete, body);
+    const response = await api.post(pathLembrete, body, {headers});
 
     return response.data;
   } catch (error: any) {
@@ -33,6 +38,11 @@ export async function criarLembrete(dadosLembrete: DadosLembrete) {
 
 export async function buscarLembretes() {
   try {
+      const token = await buscarDados("token");
+
+      const headers = {
+          'authorization': `Bearer ${token}`,
+      };
 
     const usuario = await buscarDados("usuario");
     const usuarioObj = usuario ? JSON.parse(usuario) : null;
@@ -41,7 +51,7 @@ export async function buscarLembretes() {
       idUsuario: usuarioObj._id,
     };
 
-    const response = await api.get(pathLembrete, {params});
+    const response = await api.get(pathLembrete, {params, headers});
 
     return response.data;
   } catch (error: any) {
@@ -53,6 +63,13 @@ export async function buscarLembretes() {
 export async function deletarLembrete(idLembrete: string) {
   try {
 
+      const token = await buscarDados("token");
+
+      const headers = {
+          'authorization': `Bearer ${token}`,
+      };
+
+
     const usuario = await buscarDados("usuario");
     const usuarioObj = usuario ? JSON.parse(usuario) : null;
 
@@ -63,7 +80,7 @@ export async function deletarLembrete(idLembrete: string) {
       idLembrete
     };
 
-    const response = await api.delete(`${pathLembrete}`, {params});
+    const response = await api.delete(`${pathLembrete}`, {params, headers});
 
     return response.data;
   } catch (error: any) {
