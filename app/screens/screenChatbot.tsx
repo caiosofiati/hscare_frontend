@@ -13,6 +13,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { buscarDados } from "../hooks/CacheHook";
+import { enviarPerguntaGemini } from "../hooks/GeminiAPI";
 
 interface Message {
   id: number;
@@ -22,17 +24,43 @@ interface Message {
 
 export default function HSHelperScreen() {
   const navigation = useNavigation();
-  const { user } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: Date.now(),
-      text: `Olá, ${user?.nome || "usuário"}! Sou o HS Helper 👋  Como posso ajudar com as suas dúvidas de saúde hoje?`,
-      sender: "ai",
-    },
-  ]);
+
+  const [usuario, setUsuario] = useState<{ nome: string } | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const flatListRef = useRef<FlatList<Message>>(null);
+
+  useEffect(() => {
+    const carregarUsuario = async () => {
+      try {
+        const dados = await buscarDados("usuario");
+        if (dados) {
+          const user = JSON.parse(dados);
+          setUsuario(user);
+
+          setMessages([
+            {
+              id: Date.now(),
+              text: `Olá, ${user.nome || "usuário"}! Sou o HS Helper 👋  Como posso ajudar com as suas dúvidas de saúde hoje?`,
+              sender: "ai",
+            },
+          ]);
+        }
+      } catch (e) {
+        console.error("Erro ao carregar usuário:", e);
+        setMessages([
+          {
+            id: Date.now(),
+            text: `Olá! Sou o HS Helper 👋  Como posso ajudar com as suas dúvidas de saúde hoje?`,
+            sender: "ai",
+          },
+        ]);
+      }
+    };
+
+    carregarUsuario();
+  }, []);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -40,42 +68,63 @@ export default function HSHelperScreen() {
     }
   }, [messages]);
 
-  const handleSend = async () => {
-    if (!input.trim() || loading) return;
+const handleSend = async () => {
+  if (!input.trim() || loading) return;
 
-    const userMessage: Message = {
-      id: Date.now(),
-      text: input,
-      sender: "user",
+  const userMessage: Message = {
+    id: Date.now(),
+    text: input,
+    sender: "user",
+  };
+
+  setMessages((prev) => [...prev, userMessage]);
+  setInput("");
+  setLoading(true);
+
+  try {
+    const resposta = await enviarPerguntaGemini(input);
+
+    const aiMessage: Message = {
+      id: Date.now() + 1,
+      text: resposta,
+      sender: "ai",
     };
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setLoading(true);
-
-    try {
-
-        const aiMessage: Message = {
+    setMessages((prev) => [...prev, aiMessage]);
+  } catch (error) {
+    setMessages((prev) => [
+      ...prev,
+      {
         id: Date.now() + 1,
-        text: "Resposta simulada do assistente de saúde.",
+        text:
+          "Desculpe, houve um problema ao processar sua pergunta. Tente novamente mais tarde.",
         sender: "ai",
-      };
-      setTimeout(() => {
-        setMessages((prev) => [...prev, aiMessage]);
-        setLoading(false);
-      }, 1000);
-    } catch (error) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now() + 1,
-          text: "Desculpe, não consegui processar a sua pergunta. Tente novamente.",
-          sender: "ai",
-        },
-      ]);
-      setLoading(false);
+      },
+    ]);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const renderFormattedText = (text: string) => {
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+
+  return parts.map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <Text key={index} style={{ fontWeight: "bold", color: "#333" }}>
+          {part.slice(2, -2)}
+        </Text>
+      );
     }
-  };
+    return (
+      <Text key={index} style={{ color: "#333" }}>
+        {part}
+      </Text>
+    );
+  });
+};
+
 
   return (
     <View style={{ flex: 1, backgroundColor: "#f2f2f2" }}>
@@ -124,7 +173,7 @@ export default function HSHelperScreen() {
                     : styles.aiBubble,
                 ]}
               >
-                <Text style={styles.messageText}>{item.text}</Text>
+                <Text style={styles.messageText}>{renderFormattedText(item.text)}</Text>
               </View>
             </View>
           )}
@@ -140,9 +189,13 @@ export default function HSHelperScreen() {
 
           <TouchableOpacity
             onPress={handleSend}
-            disabled={loading || !input.trim()}>
-            <LinearGradient colors={["#3BB2E4", "#6DD66D"]} style={styles.sendButton}>
-                <Ionicons name="send" size={22} color="#fff" />
+            disabled={loading || !input.trim()}
+          >
+            <LinearGradient
+              colors={["#3BB2E4", "#6DD66D"]}
+              style={styles.sendButton}
+            >
+              <Ionicons name="send" size={22} color="#fff" />
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -151,22 +204,13 @@ export default function HSHelperScreen() {
   );
 }
 
-function useAuth(): { user: any } {
-  return { user: { nome: "Paciente" } };
-}
-
 const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
     paddingVertical: 5,
-    width: '100%',
-  },
-  headerText: {
-    fontSize: 22,
-    color: "#fff",
-    fontWeight: "bold",
+    width: "100%",
   },
   messagesContainer: {
     padding: 10,

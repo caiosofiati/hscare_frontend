@@ -81,14 +81,12 @@ export default function ReminderScreen() {
         dias: diasSelecionados,
       };
 
-      // chama backend (assume que criarLembrete retorna o objeto criado com _id)
       const criado = await criarLembrete({
         titulo: novoLembrete.titulo,
         data: novoLembrete.data.toISOString(),
         dias: novoLembrete.dias,
       });
 
-      // se API retornar o objeto criado (com _id), use ele; senão use o local
       const itemParaAdicionar = criado
         ? { ...criado, data: new Date(criado.data) }
         : novoLembrete;
@@ -117,7 +115,7 @@ export default function ReminderScreen() {
 
   const handleExcluirLembrete = async (item: Lembrete) => {
     const idParaDeletar = item._id ?? item.id;
-    
+
     if (!idParaDeletar) {
       setLembretes((prev) => prev.filter((l) => (l._id ?? l.id) !== idParaDeletar));
       return;
