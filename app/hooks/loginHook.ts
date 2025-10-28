@@ -23,9 +23,15 @@ export async function login(email: string, password: string) {
   } catch (error: any) {
       console.error("Erro ao atualizar usuário:", error);
 
+      let erro = "Não foi possível validar seus dados...";
+
+      if(error.status === 404) erro = "Usuário não cadastrado";
+
+      if(error.status === 401) erro = "Email ou senha inválidos";
+
       Alert.alert(
-        "Erro ao autenticar dados",
-        error.response?.data?.message || "Não foi possível autenticar seus dados, tente novamente."
+        "Erro ao cadastrar dados",
+        erro
       );
       
     throw error;
@@ -52,9 +58,13 @@ export async function registrar(nome: string, email: string, senha: string, cpf:
     } catch (error: any) {
       console.error("Erro ao cadastrar usuário:", error);
 
+      let erro = "Não foi possível cadastrar seus dados, tente novamente.";
+
+      if(error.status === 422) erro = "Usuário já cadastrado com este email.";
+
       Alert.alert(
         "Erro ao cadastrar dados",
-        error.response?.data?.message || "Não foi possível cadastrar seus dados, tente novamente."
+        erro
       );
       
     throw error;
